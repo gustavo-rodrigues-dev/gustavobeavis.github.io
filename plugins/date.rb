@@ -33,6 +33,7 @@ module Octopress
     # Adds %o as ordinal representation of the day
     def format_date(date, format)
       date = datetime(date)
+      dateBR = date.strftime("%d/%m/%Y")
       if format.nil? || format.empty? || format == "ordinal"
         date_formatted = ordinalize(date)
       else

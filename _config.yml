@@ -4,7 +4,7 @@
 
 url: http://gustavobeavis.github.io
 title: Gustavo Rodrigues
-subtitle: Blog
+subtitle: Web developer 
 author: Gustavo da Silva Rodrigues
 simple_search: http://google.com/search
 description:
@@ -90,7 +90,7 @@ delicious_user:
 delicious_count: 3
 
 # Disqus Comments
-disqus_short_name: gustavoSRodrigues
+disqus_short_name: gustavobeavisgithubio
 disqus_show_comment_count: true
 
 # Google Analytics
