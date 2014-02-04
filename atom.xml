@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Gustavo Rodrigues]]></title>
+  <link href="http://gustavobeavis.github.io/atom.xml" rel="self"/>
+  <link href="http://gustavobeavis.github.io/"/>
+  <updated>2014-02-04T23:08:31+00:00</updated>
+  <id>http://gustavobeavis.github.io/</id>
+  <author>
+    <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
+    <email><![CDATA[gustavo.beavis@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Wello World]]></title>
+    <link href="http://gustavobeavis.github.io/blog/2014/02/03/wello-world/"/>
+    <updated>2014-02-03T08:59:51+00:00</updated>
+    <id>http://gustavobeavis.github.io/blog/2014/02/03/wello-world</id>
+    <content type="html"><![CDATA[<p>Depois de alguns meses de tentativas e erros na configuração e instalação do octopress, finalmente comecei esse projeto de compartilhar um pouco do que aprendi e aprendo sobre desenvolvimento de sistemas, projetos, metodologias etestes.</p>
+
+<p>Aqui vocês irão ver um pouco de tudo acerca de desenvolvimento de sistemas, principalmente sobre desenvolvimento web.</p>
+
+<p>Aqui vocês não encontrarão nenhuna verdade absoluta, pois como dizia o slogan do Arquivo-X, &ldquo;A verdade está lá fora&rdquo;, portanto testem, estudem e tirem suas próprias conclusões.</p>
+
+<p>Estou aberto a dúvidas, sugestões e críticas!</p>
+]]></content>
+  </entry>
+  
+</feed>
