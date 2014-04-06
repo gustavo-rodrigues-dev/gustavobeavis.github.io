@@ -146,12 +146,7 @@
 Em um mundo ideal, todo thumb ou imagem tratada, é gerada no momento do upload, porém por diversos fatores, podemos nos deparar com a necessidade de fazer isso sob demanda, e como todos sabemos, isso pode implicar em uma série de problemas, como demora ao gerar essas imagens, e em situações mais graves, podemos ter um estouro de memória, lentidão no servidor, timeout na execução, em fim, tudo que você não quer fazer.</p>
 
 <p>Pensando nisso, vamos desenvolver uma solução que ataca os principais gargalos desse tipo de tarefa, que são a ausência de <strong>threds</strong> em PHP e o processo de <strong>IO</strong>.</p>
-
-
-<h2>Solução</h2>
-
-<p>Vamos criar um processo capaz de criar thumbs de imagens que ainda não foram criadas, de modo que, antes de começarmos a processar nossa pilha de imagens saberemos o que devemos ou não criar, além disso, ao invés de checar a existência dessas imagens em um loop de <em>file_exists</em>, vamos primeiro listar todos os arquivos da pasta desitino e guardar em um array (uma unica requisição ao invés de varias requisições em um loop de file exists), depois disso vamos fazer um diff contains dos dos arrays de images a serem processadas com as imagens do servidor, ai o array resultante, é o array de imagens que precisamos criar (que não estão no servidor).</p>
-
+		
 	</div>
 
 </article>

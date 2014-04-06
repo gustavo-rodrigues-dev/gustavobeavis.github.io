@@ -117,8 +117,6 @@ Em um mundo ideal, todo thumb ou imagem tratada, é gerada no momento do upload,
 
 <p>Pensando nisso, vamos desenvolver uma solução que ataca os principais gargalos desse tipo de tarefa, que são a ausência de <strong>threds</strong> em PHP e o processo de <strong>IO</strong>.</p>
 
-<hr />
-
 <h2>Solução</h2>
 
 <p>Vamos criar um processo capaz de criar thumbs de imagens que ainda não foram criadas, de modo que, antes de começarmos a processar nossa pilha de imagens saberemos o que devemos ou não criar, além disso, ao invés de checar a existência dessas imagens em um loop de <em>file_exists</em>, vamos primeiro listar todos os arquivos da pasta desitino e guardar em um array (uma unica requisição ao invés de varias requisições em um loop de file exists), depois disso vamos fazer um diff contains dos dos arrays de images a serem processadas com as imagens do servidor, ai o array resultante, é o array de imagens que precisamos criar (que não estão no servidor).</p>
@@ -798,9 +796,7 @@ Fizemos apenas uma alteração, que foi criar um método que armazena todas as r
 
 <blockquote><p><strong>Cuidado</strong></p>
 
-<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor.</p>
-
-<p>Não queremos fazer um auto ataque DDos</p></blockquote>
+<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor (Não queremos fazer um auto ataque DDos).</p></blockquote>
 
 <p><strong>RollingCurl.php:</strong></p>
 

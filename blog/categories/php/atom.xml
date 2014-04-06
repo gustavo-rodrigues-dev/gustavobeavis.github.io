@@ -4,7 +4,7 @@
   <title><![CDATA[Category: PHP | Gustavo Rodrigues]]></title>
   <link href="http://gustavobeavis.github.io/blog/categories/php/atom.xml" rel="self"/>
   <link href="http://gustavobeavis.github.io/"/>
-  <updated>2014-04-06T13:30:24+00:00</updated>
+  <updated>2014-04-06T13:51:46+00:00</updated>
   <id>http://gustavobeavis.github.io/</id>
   <author>
     <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
@@ -22,8 +22,6 @@
 Em um mundo ideal, todo thumb ou imagem tratada, é gerada no momento do upload, porém por diversos fatores, podemos nos deparar com a necessidade de fazer isso sob demanda, e como todos sabemos, isso pode implicar em uma série de problemas, como demora ao gerar essas imagens, e em situações mais graves, podemos ter um estouro de memória, lentidão no servidor, timeout na execução, em fim, tudo que você não quer fazer.</p>
 
 <p>Pensando nisso, vamos desenvolver uma solução que ataca os principais gargalos desse tipo de tarefa, que são a ausência de <strong>threds</strong> em PHP e o processo de <strong>IO</strong>.</p>
-
-<hr />
 
 <h2>Solução</h2>
 
@@ -412,9 +410,7 @@ Fizemos apenas uma alteração, que foi criar um método que armazena todas as r
 
 <blockquote><p><strong>Cuidado</strong></p>
 
-<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor.</p>
-
-<p>Não queremos fazer um auto ataque DDos</p></blockquote>
+<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor (Não queremos fazer um auto ataque DDos).</p></blockquote>
 
 <p><strong>RollingCurl.php:</strong>
 ```php
