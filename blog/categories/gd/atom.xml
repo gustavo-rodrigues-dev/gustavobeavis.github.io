@@ -4,7 +4,7 @@
   <title><![CDATA[Category: GD | Gustavo Rodrigues]]></title>
   <link href="http://gustavobeavis.github.io/blog/categories/gd/atom.xml" rel="self"/>
   <link href="http://gustavobeavis.github.io/"/>
-  <updated>2014-04-06T13:23:48+00:00</updated>
+  <updated>2014-04-06T13:30:24+00:00</updated>
   <id>http://gustavobeavis.github.io/</id>
   <author>
     <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
@@ -412,8 +412,9 @@ Fizemos apenas uma alteração, que foi criar um método que armazena todas as r
 
 <blockquote><p><strong>Cuidado</strong></p>
 
-<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor
-Não queremos fazer um auto ataque DDos</p></blockquote>
+<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor.</p>
+
+<p>Não queremos fazer um auto ataque DDos</p></blockquote>
 
 <p><strong>RollingCurl.php:</strong>
 ```php
