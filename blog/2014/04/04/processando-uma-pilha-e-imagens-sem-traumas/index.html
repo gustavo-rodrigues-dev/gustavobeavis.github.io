@@ -160,11 +160,11 @@ Para resolver esse problema, precisamos dividir esse processo em duas partes, a 
 
 <h3>Criando os Thumbs</h3>
 
-<p>Vamos criar uma classe capaz de usar ambas as bibliotecas, pois, desse modo, independete se houver ou não o Imagck no servidor, essas imagens vão ser geradas.</p>
+<p>Vamos criar uma classe capaz de usar ambas as bibliotecas, pois, desse modo, independete de ter ou não o Imagck no servidor, essas imagens vão ser geradas.</p>
 
 <h4>Interface Image</h4>
 
-<p>Vamos primeiramente criar um contrato, para que todas as classes de imagens apliquem os metodos usando o mesmo critério, embora de modo diferente.</p>
+<p>Vamos primeiramente criar um contrato, para que todas as classes de imagens apliquem os métodos usando o mesmo critério, embora de modo diferente.</p>
 
 <p><strong>Image.php:</strong></p>
 
@@ -217,7 +217,7 @@ Para resolver esse problema, precisamos dividir esse processo em duas partes, a 
 
 <h4>Classe imageGenerateGD</h4>
 
-<p>Feito Isso, vamos criar nossa Classe que usa o GD</p>
+<p>Feito Isso, vamos criar nossa Classe que usa o GD para criar nossos thumbs</p>
 
 <p><strong>imageGenerateGD.php:</strong></p>
 
@@ -422,7 +422,7 @@ Para resolver esse problema, precisamos dividir esse processo em duas partes, a 
 
 <h4>Classe imageGenerateImagick</h4>
 
-<p>Agora vamos criar nossa classe que usa o Imagick</p>
+<p>Agora vamos criar nossa classe que usa o Imagick para criar os thumbs</p>
 
 <p><strong>imageGenerateImagick.php:</strong></p>
 
@@ -559,7 +559,7 @@ Para resolver esse problema, precisamos dividir esse processo em duas partes, a 
 
 <h4>Classe ImageGenerate</h4>
 
-<p>Agora vamos criar nossa classe que implementa ambas as classes, de GD e Imagick, no caso, você irá definir qual recurso ele vai usar, e além disso, ele vai checar se tem e extensão do Imagcik, de modo que se não houver, o sistema irá utilizar o GD.</p>
+<p>Vamos criar nossa classe que implementa ambas as classes, de GD e Imagick, no caso, você irá definir qual recurso ele vai usar, e além disso, ele vai checar se tem e extensão do Imagcik, de modo que se não houver, o sistema irá utilizar o GD.</p>
 
 <p><strong>ImageGenerate.php:</strong></p>
 
@@ -793,8 +793,13 @@ Para resolver esse problema, precisamos dividir esse processo em duas partes, a 
 
 <h3>Processando nossas imagens em paralelo</h3>
 
-<p>Agora que criamos nossas classes de imagens, e a API que gera as imagens, vamos criar uma página que utiliza um recurso do <strong>cURL</strong>, que é o <strong><em>curl_multi_exec</em></strong>, ele permite multiplas requisições a nossa API. No nosso caso, utilizamos uma Classe chamada <a href="https://github.com/takinbo/rolling-curl">RollingCurl</a>, ela permite fazer essas chamadas paralelas, permitindo fazer os processos em lotes definidos, por exemplo, executar lotes de 5 em 5 imagens, após completar um lote, ele chma outro, até o fim do processamento.
-Fizemos apenas uma alteração, que foi criar um metodo que armazena todas as respostas em um array.</p>
+<p>Agora que criamos nossas classes de imagens, e a API que gera as imagens, vamos criar uma página que utiliza um recurso do <strong>cURL</strong>, que é o <strong><em>curl_multi_exec</em></strong>, ele permite multiplas requisições simultãneas a nossa API. No nosso caso, utilizamos uma Classe chamada <a href="https://github.com/takinbo/rolling-curl">RollingCurl</a>, ela permite fazer essas chamadas paralelas, permitindo fazer os processos em lotes definidos, por exemplo, executar lotes de 5 em 5 imagens, após completar um lote, ele chama outro, até o fim do processamento.
+Fizemos apenas uma alteração, que foi criar um método que armazena todas as respostas em um array.</p>
+
+<blockquote><p><strong>Cuidado</strong></p>
+
+<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor
+Não queremos fazer um auto ataque DDos</p></blockquote>
 
 <p><strong>RollingCurl.php:</strong></p>
 
@@ -1985,7 +1990,7 @@ Fizemos apenas uma alteração, que foi criar um metodo que armazena todas as re
 </span><span class='line'><span class="nv">$terms_list</span> <span class="o">=</span> <span class="nb">array_diff</span><span class="p">(</span><span class="nv">$origin</span><span class="p">,</span> <span class="nv">$destination</span><span class="p">);</span>
 </span><span class='line'>
 </span><span class='line'><span class="nv">$rc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">RollingCurl</span><span class="p">();</span>
-</span><span class='line'><span class="nv">$rc</span><span class="o">-&gt;</span><span class="na">window_size</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+</span><span class='line'><span class="nv">$rc</span><span class="o">-&gt;</span><span class="na">window_size</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span> <span class="c1">// limit requests per batch</span>
 </span><span class='line'><span class="k">foreach</span> <span class="p">(</span><span class="nv">$terms_list</span> <span class="k">as</span> <span class="nv">$terms</span><span class="p">)</span> <span class="p">{</span>
 </span><span class='line'>    <span class="nv">$search_url</span> <span class="o">=</span> <span class="nx">URLPREFIX</span><span class="o">.</span><span class="s1">&#39;?file=&#39;</span><span class="o">.</span><span class="nb">urlencode</span><span class="p">(</span><span class="s2">&quot;../image/origin/&quot;</span><span class="o">.</span><span class="nv">$terms</span><span class="p">);</span>
 </span><span class='line'>    <span class="nv">$request</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">RollingCurlRequest</span><span class="p">(</span><span class="nv">$search_url</span><span class="p">);</span>
