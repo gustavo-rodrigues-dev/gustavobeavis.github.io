@@ -5,11 +5,11 @@
 
 <head>
 	<meta charset="utf-8">
-	<title>Websoket com PHP - Gustavo Rodrigues</title>
+	<title>WebSocket com PHP - Gustavo Rodrigues</title>
 	<meta name="author" content="Gustavo da Silva Rodrigues">
 
 	
-	<meta name="description" content="Websoket Com PHP A web como conhecemos é baseada em solicitação/resposta de HTTP, ou seja, em cada site que você acessa, em cada solicitação &hellip;">
+	<meta name="description" content="WebSocket Com PHP A web como conhecemos é baseada em solicitação/resposta de HTTP, ou seja, em cada site que você acessa, em cada solicitação &hellip;">
 	
 
   <!-- http://t.co/dKP3o1e -->
@@ -111,7 +111,7 @@
 			
 			<div class="mid-col-container">
 				<div id="content" class="inner"><article class="post" itemscope itemtype="http://schema.org/BlogPosting">
-	<h1 class="title" itemprop="name">Websoket Com PHP</h1>
+	<h1 class="title" itemprop="name">WebSocket Com PHP</h1>
 	<div class="entry-content" itemprop="articleBody"><p>A web como conhecemos é baseada em solicitação/resposta de HTTP, ou seja, em cada site que você acessa, em cada solicitação AJAX que é feita ao servidor, temos uma alocação de um novo processo HTTP que entrará em uma fila pra ser respondido e o tempo de retorno pode variar de acordo com a capacidade do servidor em lidar com esses processos, sejam eles paralelos ou concorrentes, requisições simples ou requisições que dependam de uma grande capacidade computacional.</p>
 
 <p>Agora quando pensamos em uma aplicação de respostas em tempo real, logo nos deparamos com um problema, chamado alta latência, pois, precisaremos consultar nosso servidor muito mais vezes, isso sem contar no número de clientes ativos fazendo requisições ao mesmo recurso ou áreas diferentes do mesmo sistema, causando lentidão no servidor e em casos mais graves, teremos problemas como timeout de execução ou queda do servidor.</p>
@@ -169,7 +169,7 @@ Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a h
 <p>Após o socket socket ter sido criado usando <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create()</a></em>, passar um nome com  <em><a href="http://php.net/manual/pt_BR/function.socket-bind.php">socket_bind()</a></em>, e dizer para listar conexões com <em><a href="http://php.net/manual/pt_BR/function.socket-listen.php">socket_listen ()</a></em>, a função <em><a href="http://php.net/manual/pt_BR/function.socket-accept.php">socket_accept()</a></em> irá aceitar conexões vindas neste socket. Uma vez que uma conexão com sucesso é feita, um novo &ldquo;resource&rdquo; do socket é retornado, que deve ser usado para comunicação. Se há múltiplas conexões na fila do socket, a primeira irá ser usada. Se não há conexões pendentes, socket_accept() irá bloquear até que uma conexão esteja presente.</p>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
-</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="nb">socket_accept</span><span class="p">(</span><span class="nv">$socket</span><span class="p">);</span> 
+</pre></td><td class='code'><pre><code class='php'><span class='line'><span class="nb">socket_accept</span><span class="p">(</span><span class="nv">$socket</span><span class="p">);</span>
 </span></code></pre></td></tr></table></div></figure>
 
 
@@ -850,6 +850,49 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 
 
 <p>Veja o Exemplo completo no <a href="https://github.com/gustavobeavis/ws_react_basic">Github</a></p>
+
+<h2>Javascript</h2>
+
+<p>Uma vez criado o socket, você pode acessa-lo do seu browser, lembrando que para acessalo-de forma nativa, só brownsers modernos, uqe suportem a API websocket, do contrário, existem diversas saídas, como flashsocket e javasocket, no qual você pode acessa-lo do seu script.</p>
+
+<p>Assim como no caso do servidor, teremos funções com callbacks para todos os eventos de um socket, que são:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='javascript'><span class='line'><span class="kd">var</span> <span class="nx">wsUri</span> <span class="o">=</span> <span class="s2">&quot;ws://localhost:1234&quot;</span><span class="p">;</span>
+</span><span class='line'><span class="kd">var</span> <span class="nx">connection</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">WebSocket</span><span class="p">(</span><span class="nx">wsUri</span><span class="p">);</span>
+</span><span class='line'><span class="c1">// When the connection is open, send some data to the server</span>
+</span><span class='line'><span class="nx">connection</span><span class="p">.</span><span class="nx">onopen</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">connection</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="s1">&#39;Ping&#39;</span><span class="p">);</span> <span class="c1">// Send the message &#39;Ping&#39; to the server</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Log errors</span>
+</span><span class='line'><span class="nx">connection</span><span class="p">.</span><span class="nx">onerror</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">error</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;WebSocket Error &#39;</span> <span class="o">+</span> <span class="nx">error</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// Log messages from the server</span>
+</span><span class='line'><span class="nx">connection</span><span class="p">.</span><span class="nx">onmessage</span> <span class="o">=</span> <span class="kd">function</span> <span class="p">(</span><span class="nx">e</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="s1">&#39;Server: &#39;</span> <span class="o">+</span> <span class="nx">e</span><span class="p">.</span><span class="nx">data</span><span class="p">);</span>
+</span><span class='line'><span class="p">};</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Eu fiz um exemplo completo usando Angular js, que enconta-se no <a href="https://github.com/gustavobeavis/ws_angular">github</a>.</p>
 
 <h2>Vantagens e desvantagens</h2>
 

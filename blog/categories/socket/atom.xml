@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Socket | Gustavo Rodrigues]]></title>
   <link href="http://gustavobeavis.github.io/blog/categories/socket/atom.xml" rel="self"/>
   <link href="http://gustavobeavis.github.io/"/>
-  <updated>2014-09-11T03:22:02+00:00</updated>
+  <updated>2014-09-11T10:49:05+00:00</updated>
   <id>http://gustavobeavis.github.io/</id>
   <author>
     <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
@@ -14,7 +14,7 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Websoket Com PHP]]></title>
+    <title type="html"><![CDATA[WebSocket Com PHP]]></title>
     <link href="http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php/"/>
     <updated>2014-09-11T22:30:14+00:00</updated>
     <id>http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php</id>
@@ -477,6 +477,33 @@ use MyApp\Chat;</p>
 ```</p>
 
 <p>Veja o Exemplo completo no <a href="https://github.com/gustavobeavis/ws_react_basic">Github</a></p>
+
+<h2>Javascript</h2>
+
+<p>Uma vez criado o socket, você pode acessa-lo do seu browser, lembrando que para acessalo-de forma nativa, só brownsers modernos, uqe suportem a API websocket, do contrário, existem diversas saídas, como flashsocket e javasocket, no qual você pode acessa-lo do seu script.</p>
+
+<p>Assim como no caso do servidor, teremos funções com callbacks para todos os eventos de um socket, que são:</p>
+
+<p>```javascript
+var wsUri = &ldquo;ws://localhost:1234&rdquo;;
+var connection = new WebSocket(wsUri);
+// When the connection is open, send some data to the server
+connection.onopen = function () {
+  connection.send(&lsquo;Ping&rsquo;); // Send the message &lsquo;Ping&rsquo; to the server
+};</p>
+
+<p>// Log errors
+connection.onerror = function (error) {
+  console.log(&lsquo;WebSocket Error &rsquo; + error);
+};</p>
+
+<p>// Log messages from the server
+connection.onmessage = function (e) {
+  console.log(&lsquo;Server: &rsquo; + e.data);
+};
+```</p>
+
+<p>Eu fiz um exemplo completo usando Angular js, que enconta-se no <a href="https://github.com/gustavobeavis/ws_angular">github</a>.</p>
 
 <h2>Vantagens e desvantagens</h2>
 
