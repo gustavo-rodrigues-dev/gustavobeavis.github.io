@@ -1,14 +1,18 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
-        <loc>http://gustavobeavis.github.io/blog/2014/02/03/wello-world/</loc>
-        <lastmod>2014-02-04T09:09:14+00:00</lastmod>
+        <loc>http://gustavobeavis.github.io/blog/2014/02/03/hello-world/</loc>
+        <lastmod>2014-09-11T01:24:10+00:00</lastmod>
     </url>
     <url>
         <loc>
             http://gustavobeavis.github.io/blog/2014/04/04/processando-uma-pilha-e-imagens-sem-traumas/
         </loc>
-        <lastmod>2014-04-06T13:37:07+00:00</lastmod>
+        <lastmod>2014-09-11T01:13:41+00:00</lastmod>
+    </url>
+    <url>
+        <loc>http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php/</loc>
+        <lastmod>2014-09-11T01:34:46+00:00</lastmod>
     </url>
     <url>
         <loc>http://gustavobeavis.github.io/robots.txt</loc>
@@ -16,7 +20,7 @@
     </url>
     <url>
         <loc>http://gustavobeavis.github.io/</loc>
-        <lastmod>2014-04-06T13:37:07+00:00</lastmod>
+        <lastmod>2014-09-11T01:34:46+00:00</lastmod>
     </url>
     <url>
         <loc>http://gustavobeavis.github.io/blog/categories/</loc>
@@ -28,6 +32,6 @@
     </url>
     <url>
         <loc>http://gustavobeavis.github.io/blog/archives/</loc>
-        <lastmod>2014-04-06T13:37:07+00:00</lastmod>
+        <lastmod>2014-09-11T01:34:46+00:00</lastmod>
     </url>
 </urlset>

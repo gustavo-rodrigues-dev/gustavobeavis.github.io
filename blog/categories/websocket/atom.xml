@@ -1,0 +1,523 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Category: WebSocket | Gustavo Rodrigues]]></title>
+  <link href="http://gustavobeavis.github.io/blog/categories/websocket/atom.xml" rel="self"/>
+  <link href="http://gustavobeavis.github.io/"/>
+  <updated>2014-09-11T01:48:07+00:00</updated>
+  <id>http://gustavobeavis.github.io/</id>
+  <author>
+    <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
+    <email><![CDATA[gustavo.beavis@gmail.com]]></email>
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Websoket Com PHP]]></title>
+    <link href="http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php/"/>
+    <updated>2014-09-11T22:30:14+00:00</updated>
+    <id>http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php</id>
+    <content type="html"><![CDATA[<h2>Resumo</h2>
+
+<p>A web como conhecemos é baseada em solicitação/resposta de HTTP, ou seja, em cada site que você acessa, em cada solicitação AJAX que é feita ao servidor, temos uma alocação de um novo processo HTTP que entrará em uma fila pra ser respondido e o tempo de retorno pode variar de acordo com a capacidade do servidor em lidar com esses processos, sejam eles paralelos ou concorrentes, requisições simples ou requisições que dependam de uma grande capacidade computacional.</p>
+
+<p>Agora quando pensamos em uma aplicação de respostas em tempo real, logo nos deparamos com um problema, chamado alta latência, pois, precisaremos consultar nosso servidor muito mais vezes, isso sem contar no número de clientes ativos fazendo requisições ao mesmo recurso ou áreas diferentes do mesmo sistema, causando lentidão no servidor e em casos mais graves, teremos problemas como timeout de execução ou queda do servidor.</p>
+
+<h2>Event loop</h2>
+
+<p>Toda aplicação realtime, necessariamente possui um loop de consulta de estado ou evento, isso pode estar tanto do lado cliente como do lado servidor. Esse loop ficará escutando a aplicação aguardando alguma mudança de estado, e caso haja atualização, o sistema deve enviar esses dados, a diferença entre o loop do cliente e o do servidor é que no caso do servidor temos um único serviço que irá ficar escutando todas as requisições e mandando as mudanças em tempo real para todos ou algum cliente específico via socket, já no caso do cliente, teremos um script long pooling em todos os clientes, que irá consultar periodicamente o servidor e receber as possíveis alterações do servidor.</p>
+
+<h2>Primeiro socket PHP</h2>
+
+<p>Para criar um socket com php, você deve seguir 6 passos, que vão da abertura de um socket até remover a mascara da mensagem resolver seu encode.</p>
+
+<h4>Passos:</h4>
+
+<ol>
+<li>Abrir um socket.</li>
+<li>Vincular a um endereço.</li>
+<li>Escutar conexões de entrada</li>
+<li>Aceitar conexões</li>
+<li>WebSocket Handshake.</li>
+<li>Unmask/Encode data frames.</li>
+</ol>
+
+
+<h4>Passo 1 &ndash; Abrir um socket:</h4>
+
+<p>Primeiro vamos criar um socket com  <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create</a>(Domain, Type, Protocol)</em> do PHP:
+<code>php
+$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+</code></p>
+
+<h4>Passo 2 &ndash; Vincular a um endereço:</h4>
+
+<p><em><a href="http://php.net/manual/pt_BR/function.socket-bind.php">socket_bind()</a></em> passa o nome dado em address para o socket descrito por socket, que deve ser um resource socket válido criado com <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create</a></em>.
+Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a href="http://php.net/manual/pt_BR/function.socket-connect.php">socket_connect ()</a></em> ou <em><a href="http://php.net/manual/pt_BR/function.socket-listen.php">socket_listen ()</a></em>.
+<code>php
+socket_bind($socket, 'localhost');
+</code></p>
+
+<h4>Passo 3 &ndash; Escutar conexões de entrada</h4>
+
+<p>Após o socket socket ter sido criado usando <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create</a></em> e associado para um nome com <em><a href="http://php.net/manual/pt_BR/function.socket-bind.php">socket_bind()</a></em> , ele deve dizer para aguardar por escuta em conexões que irão entrar socket com o <em><a href="http://php.net/manual/pt_BR/function.socket-listen.php">socket_listen ()</a></em>.
+<code>php
+socket_listen($socket);
+</code></p>
+
+<h4>Passo 4 &ndash; Aceitar conexões</h4>
+
+<p>Após o socket socket ter sido criado usando <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create()</a></em>, passar um nome com  <em><a href="http://php.net/manual/pt_BR/function.socket-bind.php">socket_bind()</a></em>, e dizer para listar conexões com <em><a href="http://php.net/manual/pt_BR/function.socket-listen.php">socket_listen ()</a></em>, a função <em><a href="http://php.net/manual/pt_BR/function.socket-accept.php">socket_accept()</a></em> irá aceitar conexões vindas neste socket. Uma vez que uma conexão com sucesso é feita, um novo &ldquo;resource&rdquo; do socket é retornado, que deve ser usado para comunicação. Se há múltiplas conexões na fila do socket, a primeira irá ser usada. Se não há conexões pendentes, socket_accept() irá bloquear até que uma conexão esteja presente.
+<code>php
+socket_accept($socket);
+</code></p>
+
+<h4>Passo 5 &ndash; WebSocket Handshake</h4>
+
+<p>O cliente tem de apresentar-se, enviando uma solicitação WebSocket handshake para estabelecer uma conexão bem sucedida com o servidor,  o pedido contém um Sec-WebSocket-Key que é uma chave em base64 de 16 bytes
+<code>php
+&lt;?php
+$secKey = $headers['Sec-WebSocket-Key'];
+$secAccept = base64_encode(pack('H*', sha1($secKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
+$upgrade  = "HTTP/1.1 101 Web Socket Protocol Handshake\r\n" .
+"Upgrade: websocket\r\n" .
+"Connection: Upgrade\r\n" .
+"WebSocket-Origin: $host\r\n" .
+"WebSocket-Location: ws://$host:$port/deamon.php\r\n".
+"Sec-WebSocket-Accept:$secAccept\r\n\r\n";
+socket_write($client_conn,$upgrade,strlen($upgrade));
+</code></p>
+
+<h4>Passo 6 &ndash; Unmask/Encode data frames.</h4>
+
+<p>Depois de fazer handshaking, o cliente pode enviar e receber mensagens, mas as mensagens enviadas são todas criptografadas, por isso, se queremos exibi-las, precisamos remover a mascara de cada frame de dado, conforme o <a href="http://tools.ietf.org/html/rfc6455#section-5.2">rfc6455</a>.
+```php
+&lt;?php
+//Unmask incoming framed message</p>
+
+<p>function unmask($text) {</p>
+
+<pre><code>$length = ord($text[1]) &amp; 127;
+if($length == 126) {
+    $masks = substr($text, 4, 4);
+    $data = substr($text, 8);
+}
+elseif($length == 127) {
+    $masks = substr($text, 10, 4);
+    $data = substr($text, 14);
+}
+else {
+    $masks = substr($text, 2, 4);
+    $data = substr($text, 6);
+}
+$text = "";
+for ($i = 0; $i &lt; strlen($data); ++$i) {
+    $text .= $data[$i] ^ $masks[$i%4];
+}
+return $text;
+</code></pre>
+
+<p>}</p>
+
+<p>//Encode message for transfer to client.
+function mask($text)
+{</p>
+
+<pre><code>$b1 = 0x80 | (0x1 &amp; 0x0f);
+$length = strlen($text);
+
+if($length &lt;= 125)
+    $header = pack('CC', $b1, $length);
+elseif($length &gt; 125 &amp;&amp; $length &lt; 65536)
+    $header = pack('CCn', $b1, 126, $length);
+elseif($length &gt;= 65536)
+    $header = pack('CCNN', $b1, 127, $length);
+return $header.$text;
+</code></pre>
+
+<p>}
+```</p>
+
+<h4>Exemplo Completo</h4>
+
+<p>```php
+&lt;?php
+$host = &lsquo;localhost&rsquo;;
+$port = &lsquo;1234&rsquo;;
+$null = NULL;</p>
+
+<p>//TCP/IP sream
+$socket = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+//reuseable port
+socket_set_option($socket, SOL_SOCKET, SO_REUSEADDR, 1);</p>
+
+<p>//bind socket to specified host
+socket_bind($socket, 0, $port);</p>
+
+<p>//listen to port
+socket_listen($socket);</p>
+
+<p>//create &amp; add listning socket to the list
+$clients = array($socket);</p>
+
+<p>//start endless loop, so that our script doesn&rsquo;t stop
+while (true) {</p>
+
+<pre><code>//manage multipal connections
+$changed = $clients;
+//returns the socket resources in $changed array
+socket_select($changed, $null, $null, 0, 10);
+
+//check for new socket
+if (in_array($socket, $changed)) {
+    $socket_new = socket_accept($socket); //accpet new socket
+    $clients[] = $socket_new; //add socket to client array
+
+    $header = socket_read($socket_new, 1024); //read data sent by the socket
+    perform_handshaking($header, $socket_new, $host, $port); //perform websocket handshake
+
+    socket_getpeername($socket_new, $ip); //get ip address of connected socket
+    $response = mask(json_encode(array('type'=&gt;'system', 'message'=&gt;$ip.' connected'))); //prepare json data
+    send_message($response); //notify all users about new connection
+
+    //make room for new socket
+    $found_socket = array_search($socket, $changed);
+    unset($changed[$found_socket]);
+}
+
+//loop through all connected sockets
+foreach ($changed as $changed_socket) {
+
+    //check for any incomming data
+    while(socket_recv($changed_socket, $buf, 1024, 0) &gt;= 1)
+    {
+        $received_text = unmask($buf); //unmask data
+        $tst_msg = json_decode($received_text); //json decode
+        $user_name = $tst_msg-&gt;name; //sender name
+        $user_message = $tst_msg-&gt;message; //message text
+
+        //prepare data to be sent to client
+        $response_text = mask(json_encode(array('type'=&gt;'usermsg', 'name'=&gt;$user_name, 'message'=&gt;$user_message)));
+        send_message($response_text); //send data
+        break 2; //exist this loop
+    }
+
+    $buf = @socket_read($changed_socket, 1024, PHP_NORMAL_READ);
+    if ($buf === false) { // check disconnected client
+        // remove client for $clients array
+        $found_socket = array_search($changed_socket, $clients);
+        socket_getpeername($changed_socket, $ip);
+        unset($clients[$found_socket]);
+
+        //notify all users about disconnected connection
+        $response = mask(json_encode(array('type'=&gt;'system', 'message'=&gt;$ip.' disconnected')));
+        send_message($response);
+    }
+}
+</code></pre>
+
+<p>}
+// close the listening socket
+socket_close($sock);</p>
+
+<p>function send_message($msg)
+{</p>
+
+<pre><code>global $clients;
+foreach($clients as $changed_socket)
+{
+    @socket_write($changed_socket,$msg,strlen($msg));
+}
+return true;
+</code></pre>
+
+<p>}</p>
+
+<p>//Unmask incoming framed message
+function unmask($text) {</p>
+
+<pre><code>$length = ord($text[1]) &amp; 127;
+if($length == 126) {
+    $masks = substr($text, 4, 4);
+    $data = substr($text, 8);
+}
+elseif($length == 127) {
+    $masks = substr($text, 10, 4);
+    $data = substr($text, 14);
+}
+else {
+    $masks = substr($text, 2, 4);
+    $data = substr($text, 6);
+}
+$text = "";
+for ($i = 0; $i &lt; strlen($data); ++$i) {
+    $text .= $data[$i] ^ $masks[$i%4];
+}
+return $text;
+</code></pre>
+
+<p>}</p>
+
+<p>//Encode message for transfer to client.
+function mask($text)
+{</p>
+
+<pre><code>$b1 = 0x80 | (0x1 &amp; 0x0f);
+$length = strlen($text);
+
+if($length &lt;= 125)
+    $header = pack('CC', $b1, $length);
+elseif($length &gt; 125 &amp;&amp; $length &lt; 65536)
+    $header = pack('CCn', $b1, 126, $length);
+elseif($length &gt;= 65536)
+    $header = pack('CCNN', $b1, 127, $length);
+return $header.$text;
+</code></pre>
+
+<p>}</p>
+
+<p>//handshake new client.
+function perform_handshaking($receved_header,$client_conn, $host, $port)
+{</p>
+
+<pre><code>$headers = array();
+$lines = preg_split("/\r\n/", $receved_header);
+foreach($lines as $line)
+{
+    $line = chop($line);
+    if(preg_match('/\A(\S+): (.*)\z/', $line, $matches))
+    {
+        $headers[$matches[1]] = $matches[2];
+    }
+}
+
+$secKey = $headers['Sec-WebSocket-Key'];
+$secAccept = base64_encode(pack('H*', sha1($secKey . '258EAFA5-E914-47DA-95CA-C5AB0DC85B11')));
+//hand shaking header
+$upgrade  = "HTTP/1.1 101 Web Socket Protocol Handshake\r\n" .
+    "Upgrade: websocket\r\n" .
+    "Connection: Upgrade\r\n" .
+    "WebSocket-Origin: $host\r\n" .
+    "WebSocket-Location: ws://$host:$port/demo/shout.php\r\n".
+    "Sec-WebSocket-Accept:$secAccept\r\n\r\n";
+socket_write($client_conn,$upgrade,strlen($upgrade));
+</code></pre>
+
+<p>}
+```</p>
+
+<p>Para executar o Socket basta você acessar o seu terminal e executar o script que serve como servidor, pois se inicia-lo via browser, o seu socket não funcionará.
+<code>
+php -q path-to-server/server.php
+</code></p>
+
+<p>Veja o Exemplo completo no <a href="https://github.com/gustavobeavis/ws_pure_php"><strong>github</strong></a></p>
+
+<h2>O React PHP</h2>
+
+<p>O React PHP é uma biblioteca que foi criada para suprir uma necessidade crescente de computação reativa, ela fornece entre outras coisas a possibilidade de criar aplicações com IO não blocante, como o NodeJS.</p>
+
+<h2>Um chat com React e Ratchet</h2>
+
+<p>O Rachet possui um conjunto de soluções que abstraem e facilitam a criação, manutenção, envios e recebimentos de mensagens de um socket.
+Você terá que gerênciar os eventos do seu socket, com as funções.</p>
+
+<h4>Funções</h4>
+
+<ol>
+<li>onOpen</li>
+<li>onMessage</li>
+<li>onClose</li>
+<li>onError</li>
+</ol>
+
+
+<h4>onOpen</h4>
+
+<p>Essa função é chamada assim que ocorre uma nova conexão, nela você usa um metodo para guardar a nova conexão para enviar mensagens
+```php
+public function onOpen(ConnectionInterface $conn) {
+  // Store the new connection to send messages to later
+  $this->clients->attach($conn);</p>
+
+<p>  echo &ldquo;New connection! ({$conn->resourceId})\n&rdquo;;
+}
+```</p>
+
+<h4>onMessage</h4>
+
+<p>Essa função é chamada quando o evento de existe uma nova mensagem, e com ela, você pode encaminhar essas mensagens para todos ou para alguns clientes conectados ao socket
+```php
+public function onMessage(ConnectionInterface $from, $msg) {</p>
+
+<pre><code>$numRecv = count($this-&gt;clients) - 1;
+echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
+    , $from-&gt;resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
+$dados = json_decode($msg, true);
+$dados['id'] = $from-&gt;resourceId;
+
+foreach ($this-&gt;clients as $client) {
+
+        // The sender is not the receiver, send to each client connected
+        $client-&gt;send(json_encode($dados));
+
+}
+</code></pre>
+
+<p>}
+```</p>
+
+<h4>onClose</h4>
+
+<p>Essa função é chamada assim que um um cliente se desconecta do websocket, e apartir dele, você pode atribuir callbacks para esse evento.
+```php
+public function onClose(ConnectionInterface $conn) {</p>
+
+<pre><code>// The connection is closed, remove it, as we can no longer send it messages
+$this-&gt;clients-&gt;detach($conn);
+
+echo "Connection {$conn-&gt;resourceId} has disconnected\n";
+</code></pre>
+
+<p>}
+```</p>
+
+<h4>onError</h4>
+
+<p>Esse evento é disparado quando ocorre um erro interno no servidor.
+```php
+public function onError(ConnectionInterface $conn, \Exception $e) {</p>
+
+<pre><code>echo "An error has occurred: {$e-&gt;getMessage()}\n";
+
+$conn-&gt;close();
+</code></pre>
+
+<p>}
+```</p>
+
+<h4>Classe completa</h4>
+
+<p>```php
+&lt;?php
+namespace MyApp;
+use Ratchet\MessageComponentInterface;
+use Ratchet\ConnectionInterface;</p>
+
+<p>class Chat implements MessageComponentInterface {</p>
+
+<pre><code>protected $clients;
+
+public function __construct() {
+    $this-&gt;clients = new \SplObjectStorage;
+}
+
+public function onOpen(ConnectionInterface $conn) {
+    // Store the new connection to send messages to later
+    $this-&gt;clients-&gt;attach($conn);
+
+    echo "New connection! ({$conn-&gt;resourceId})\n";
+}
+
+public function onMessage(ConnectionInterface $from, $msg) {
+    $numRecv = count($this-&gt;clients) - 1;
+    echo sprintf('Connection %d sending message "%s" to %d other connection%s' . "\n"
+        , $from-&gt;resourceId, $msg, $numRecv, $numRecv == 1 ? '' : 's');
+    $dados = json_decode($msg, true);
+    $dados['id'] = $from-&gt;resourceId;
+
+    foreach ($this-&gt;clients as $client) {
+
+            // The sender is not the receiver, send to each client connected
+            $client-&gt;send(json_encode($dados));
+
+    }
+}
+
+public function onClose(ConnectionInterface $conn) {
+    // The connection is closed, remove it, as we can no longer send it messages
+    $this-&gt;clients-&gt;detach($conn);
+
+    echo "Connection {$conn-&gt;resourceId} has disconnected\n";
+}
+
+public function onError(ConnectionInterface $conn, \Exception $e) {
+    echo "An error has occurred: {$e-&gt;getMessage()}\n";
+
+    $conn-&gt;close();
+}
+</code></pre>
+
+<p>}</p>
+
+<h3>Startando seu socket</h3>
+
+<p>Agora que você tem seus metodos, agora você precisa criar um arquivo para instanciar a classe criada e para servir como socket.</p>
+
+<p>&lt;?php
+use Ratchet\Server\IoServer;
+use Ratchet\Http\HttpServer;
+use Ratchet\WebSocket\WsServer;
+use MyApp\Chat;</p>
+
+<p>require &lsquo;vendor/autoload.php&rsquo;;</p>
+
+<p>$server = IoServer::factory(</p>
+
+<pre><code>new HttpServer(
+    new WsServer(
+        new Chat()
+    )
+),
+1234
+</code></pre>
+
+<p>);</p>
+
+<p>$server->run();
+```</p>
+
+<p>Veja o Exemplo completo no <a href="https://github.com/gustavobeavis/ws_react_basic">Github</a></p>
+
+<h2>Vantagens e desvantagens</h2>
+
+<p>A vantagem de usar um websoket é que ao invés de termos muitos clientes fazendo requisições periódicas http ao mesmo endpoint para verificar possíveis mudanças de estado da aplicação, o socket que irá gerenciar as alterações e mandar para o(os) clientes essas atualizações logo que elas ocorrerem, evitando um tráfego desnecessário de requisições http, como consultas de estado sem mudança ou ainda muitos clientes consultando a mesma coisa. Em contra partida, teremos um script executando um loop infinito no servidor, aguardando algum evento para transmitir para os usuários, ou seja, embora você resolva a latência, você terá um processo que irá consumir recursos do servidor durante todo tempo de que você mante-lo rodando, independente se houver ou não novos eventos, solicitações ou usuários ativos.</p>
+
+<p>Além disso, podemos ter situações onde o navegador do cliente não tenha suporte websoket, flash ou java. Nesses casos, não teremos como evitar o uso de long pooling.</p>
+
+<p>O Websoket é o futuro, porém, o PHP não é a melhor saída para esse tipo de recurso, embora funcione bem na maioria dos casos. Eu aconselho o uso de Erlang ou Node JS, por serem linguagens de natureza não blocante e por lidarem melhor com concorrência.</p>
+
+<h1>Aplicações</h1>
+
+<ul>
+<li>Chats</li>
+<li>Games multi-player online</li>
+<li>Sistemas de sincronização mobile/Web</li>
+<li>sistemas que dependam de modo geral de informações em tempo rel</li>
+</ul>
+
+
+<h2>Referências</h2>
+
+<p>[HTML5 Rocks &ndash; Apresentando WebSockets &ndash; PT]
+<a href="http://www.html5rocks.com/pt/tutorials/websockets/basics/">http://www.html5rocks.com/pt/tutorials/websockets/basics/</a></p>
+
+<p>[Sergio Lopes &ndash; SPYD e HTTP 2.0 &ndash; PT]
+<a href="https://docs.google.com/presentation/d/1BVyBcR5AE2kwY7akcmM0O3dDJ5TccY3ew0U9Ux7wsQs/pub?start=false&amp;loop=false&amp;delayms=3000&amp;utm_content=buffer7886e&amp;utm_medium=social&amp;utm_source=twitter.com&amp;utm_campaign=buffer#slide=id.p">https://docs.google.com/presentation/d/1BVyBcR5AE2kwY7akcmM0O3dDJ5TccY3ew0U9Ux7wsQs/pub?start=false&amp;loop=false&amp;delayms=3000&amp;utm_content=buffer7886e&amp;utm_medium=social&amp;utm_source=twitter.com&amp;utm_campaign=buffer#slide=id.p</a></p>
+
+<p>[JustCode &ndash; Otimizando Performance com Compactação Gzip/Deflate]
+<a href="http://blog.glaucocustodio.com/2012/09/22/otimizando-performance-com-compactacao-gzip-deflate/">http://blog.glaucocustodio.com/2012/09/22/otimizando-performance-com-compactacao-gzip-deflate/</a></p>
+
+<p>[Sanwebe &ndash; mple Chat Using WebSocket and PHP Socket &ndash; EN]
+<a href="http://www.sanwebe.com/2013/05/chat-using-websocket-php-socket">http://www.sanwebe.com/2013/05/chat-using-websocket-php-socket</a></p>
+
+<p>[Ratchet &ndash; Lib]
+<a href="http://socketo.me/">http://socketo.me/</a></p>
+
+<p>[socket.io]
+<a href="http://socket.io/">http://socket.io/</a></p>
+]]></content>
+  </entry>
+  
+</feed>

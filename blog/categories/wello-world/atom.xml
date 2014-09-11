@@ -4,7 +4,7 @@
   <title><![CDATA[Category: Wello World | Gustavo Rodrigues]]></title>
   <link href="http://gustavobeavis.github.io/blog/categories/wello-world/atom.xml" rel="self"/>
   <link href="http://gustavobeavis.github.io/"/>
-  <updated>2014-04-06T13:51:46+00:00</updated>
+  <updated>2014-09-11T01:48:07+00:00</updated>
   <id>http://gustavobeavis.github.io/</id>
   <author>
     <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
@@ -14,10 +14,10 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Wello World]]></title>
-    <link href="http://gustavobeavis.github.io/blog/2014/02/03/wello-world/"/>
+    <title type="html"><![CDATA[Hello World]]></title>
+    <link href="http://gustavobeavis.github.io/blog/2014/02/03/hello-world/"/>
     <updated>2014-02-03T08:59:51+00:00</updated>
-    <id>http://gustavobeavis.github.io/blog/2014/02/03/wello-world</id>
+    <id>http://gustavobeavis.github.io/blog/2014/02/03/hello-world</id>
     <content type="html"><![CDATA[<p>Depois de alguns meses de tentativas e erros na configuração e instalação do octopress, finalmente comecei esse projeto de compartilhar um pouco do que aprendi e aprendo sobre desenvolvimento de sistemas, projetos, metodologias etestes.</p>
 
 <p>Aqui vocês irão ver um pouco de tudo acerca de desenvolvimento de sistemas, principalmente sobre desenvolvimento web.</p>
