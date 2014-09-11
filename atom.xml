@@ -4,7 +4,7 @@
   <title><![CDATA[Gustavo Rodrigues]]></title>
   <link href="http://gustavobeavis.github.io/atom.xml" rel="self"/>
   <link href="http://gustavobeavis.github.io/"/>
-  <updated>2014-09-11T01:48:07+00:00</updated>
+  <updated>2014-09-11T03:22:02+00:00</updated>
   <id>http://gustavobeavis.github.io/</id>
   <author>
     <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
@@ -18,9 +18,7 @@
     <link href="http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php/"/>
     <updated>2014-09-11T22:30:14+00:00</updated>
     <id>http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php</id>
-    <content type="html"><![CDATA[<h2>Resumo</h2>
-
-<p>A web como conhecemos é baseada em solicitação/resposta de HTTP, ou seja, em cada site que você acessa, em cada solicitação AJAX que é feita ao servidor, temos uma alocação de um novo processo HTTP que entrará em uma fila pra ser respondido e o tempo de retorno pode variar de acordo com a capacidade do servidor em lidar com esses processos, sejam eles paralelos ou concorrentes, requisições simples ou requisições que dependam de uma grande capacidade computacional.</p>
+    <content type="html"><![CDATA[<p>A web como conhecemos é baseada em solicitação/resposta de HTTP, ou seja, em cada site que você acessa, em cada solicitação AJAX que é feita ao servidor, temos uma alocação de um novo processo HTTP que entrará em uma fila pra ser respondido e o tempo de retorno pode variar de acordo com a capacidade do servidor em lidar com esses processos, sejam eles paralelos ou concorrentes, requisições simples ou requisições que dependam de uma grande capacidade computacional.</p>
 
 <p>Agora quando pensamos em uma aplicação de respostas em tempo real, logo nos deparamos com um problema, chamado alta latência, pois, precisaremos consultar nosso servidor muito mais vezes, isso sem contar no número de clientes ativos fazendo requisições ao mesmo recurso ou áreas diferentes do mesmo sistema, causando lentidão no servidor e em casos mais graves, teremos problemas como timeout de execução ou queda do servidor.</p>
 
@@ -44,7 +42,7 @@
 </ol>
 
 
-<h4>Passo 1 &ndash; Abrir um socket:</h4>
+<h3>Passo 1 &ndash; Abrir um socket:</h3>
 
 <p>Primeiro vamos criar um socket com  <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create</a>(Domain, Type, Protocol)</em> do PHP:</p>
 
@@ -53,7 +51,7 @@
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>Passo 2 &ndash; Vincular a um endereço:</h4>
+<h3>Passo 2 &ndash; Vincular a um endereço:</h3>
 
 <p><em><a href="http://php.net/manual/pt_BR/function.socket-bind.php">socket_bind()</a></em> passa o nome dado em address para o socket descrito por socket, que deve ser um resource socket válido criado com <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create</a></em>.
 Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a href="http://php.net/manual/pt_BR/function.socket-connect.php">socket_connect ()</a></em> ou <em><a href="http://php.net/manual/pt_BR/function.socket-listen.php">socket_listen ()</a></em>.</p>
@@ -63,7 +61,7 @@ Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a h
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>Passo 3 &ndash; Escutar conexões de entrada</h4>
+<h3>Passo 3 &ndash; Escutar conexões de entrada</h3>
 
 <p>Após o socket socket ter sido criado usando <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create</a></em> e associado para um nome com <em><a href="http://php.net/manual/pt_BR/function.socket-bind.php">socket_bind()</a></em> , ele deve dizer para aguardar por escuta em conexões que irão entrar socket com o <em><a href="http://php.net/manual/pt_BR/function.socket-listen.php">socket_listen ()</a></em>.</p>
 
@@ -72,7 +70,7 @@ Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a h
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>Passo 4 &ndash; Aceitar conexões</h4>
+<h3>Passo 4 &ndash; Aceitar conexões</h3>
 
 <p>Após o socket socket ter sido criado usando <em><a href="http://php.net/manual/pt_BR/function.socket-create.php">socket_create()</a></em>, passar um nome com  <em><a href="http://php.net/manual/pt_BR/function.socket-bind.php">socket_bind()</a></em>, e dizer para listar conexões com <em><a href="http://php.net/manual/pt_BR/function.socket-listen.php">socket_listen ()</a></em>, a função <em><a href="http://php.net/manual/pt_BR/function.socket-accept.php">socket_accept()</a></em> irá aceitar conexões vindas neste socket. Uma vez que uma conexão com sucesso é feita, um novo &ldquo;resource&rdquo; do socket é retornado, que deve ser usado para comunicação. Se há múltiplas conexões na fila do socket, a primeira irá ser usada. Se não há conexões pendentes, socket_accept() irá bloquear até que uma conexão esteja presente.</p>
 
@@ -83,7 +81,7 @@ Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a h
 
 <p></p>
 
-<h4>Passo 5 &ndash; WebSocket Handshake</h4>
+<h3>Passo 5 &ndash; WebSocket Handshake</h3>
 
 <p>O cliente tem de apresentar-se, enviando uma solicitação WebSocket handshake para estabelecer uma conexão bem sucedida com o servidor,  o pedido contém um Sec-WebSocket-Key que é uma chave em base64 de 16 bytes</p>
 
@@ -110,7 +108,7 @@ Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a h
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>Passo 6 &ndash; Unmask/Encode data frames.</h4>
+<h3>Passo 6 &ndash; Unmask/Encode data frames.</h3>
 
 <p>Depois de fazer handshaking, o cliente pode enviar e receber mensagens, mas as mensagens enviadas são todas criptografadas, por isso, se queremos exibi-las, precisamos remover a mascara de cada frame de dado, conforme o <a href="http://tools.ietf.org/html/rfc6455#section-5.2">rfc6455</a>.</p>
 
@@ -193,7 +191,7 @@ Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a h
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>Exemplo Completo</h4>
+<h3>Exemplo Completo</h3>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -514,7 +512,7 @@ Isto tem que ser feito antes que uma conexão seja estabelecida, usando <em><a h
 <p>O Rachet possui um conjunto de soluções que abstraem e facilitam a criação, manutenção, envios e recebimentos de mensagens de um socket.
 Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 
-<h4>Funções</h4>
+<h3>Funções</h3>
 
 <ol>
 <li>onOpen</li>
@@ -524,7 +522,7 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 </ol>
 
 
-<h4>onOpen</h4>
+<h3>onOpen</h3>
 
 <p>Essa função é chamada assim que ocorre uma nova conexão, nela você usa um metodo para guardar a nova conexão para enviar mensagens</p>
 
@@ -543,7 +541,7 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>onMessage</h4>
+<h3>onMessage</h3>
 
 <p>Essa função é chamada quando o evento de existe uma nova mensagem, e com ela, você pode encaminhar essas mensagens para todos ou para alguns clientes conectados ao socket</p>
 
@@ -578,7 +576,7 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>onClose</h4>
+<h3>onClose</h3>
 
 <p>Essa função é chamada assim que um um cliente se desconecta do websocket, e apartir dele, você pode atribuir callbacks para esse evento.</p>
 
@@ -597,7 +595,7 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>onError</h4>
+<h3>onError</h3>
 
 <p>Esse evento é disparado quando ocorre um erro interno no servidor.</p>
 
@@ -614,7 +612,7 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 </span></code></pre></td></tr></table></div></figure>
 
 
-<h4>Classe completa</h4>
+<h3>Classe completa</h3>
 
 <figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -767,7 +765,9 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 
 <p>O Websoket é o futuro, porém, o PHP não é a melhor saída para esse tipo de recurso, embora funcione bem na maioria dos casos. Eu aconselho o uso de Erlang ou Node JS, por serem linguagens de natureza não blocante e por lidarem melhor com concorrência.</p>
 
-<h1>Aplicações</h1>
+<h2>Aplicações</h2>
+
+<p>Os websockets podem ter muitas aplicações, sobre tudo, em:</p>
 
 <ul>
 <li>Chats</li>
@@ -779,23 +779,15 @@ Você terá que gerênciar os eventos do seu socket, com as funções.</p>
 
 <h2>Referências</h2>
 
-<p>[HTML5 Rocks &ndash; Apresentando WebSockets &ndash; PT]
-<a href="http://www.html5rocks.com/pt/tutorials/websockets/basics/">http://www.html5rocks.com/pt/tutorials/websockets/basics/</a></p>
+<ul>
+<li><p><a href="http://www.html5rocks.com/pt/tutorials/websockets/basics/">HTML5 Rocks &ndash; Apresentando WebSockets &ndash; PT</a></p></li>
+<li><p><a href="https://docs.google.com/presentation/d/1BVyBcR5AE2kwY7akcmM0O3dDJ5TccY3ew0U9Ux7wsQs/pub?start=false&amp;loop=false&amp;delayms=3000&amp;utm_content=buffer7886e&amp;utm_medium=social&amp;utm_source=twitter.com&amp;utm_campaign=buffer#slide=id.p">Sergio Lopes &ndash; SPYD e HTTP 2.0 &ndash; PT</a></p></li>
+<li><p><a href="http://blog.glaucocustodio.com/2012/09/22/otimizando-performance-com-compactacao-gzip-deflate/">JustCode &ndash; Otimizando Performance com Compactação Gzip/Deflate</a></p></li>
+<li><p><a href="http://www.sanwebe.com/2013/05/chat-using-websocket-php-socket">Sanwebe &ndash; mple Chat Using WebSocket and PHP Socket &ndash; EN</a></p></li>
+<li><p><a href="http://socketo.me/">Ratchet &ndash; Lib</a></p></li>
+<li><p><a href="http://socket.io/">socket.io</a></p></li>
+</ul>
 
-<p>[Sergio Lopes &ndash; SPYD e HTTP 2.0 &ndash; PT]
-<a href="https://docs.google.com/presentation/d/1BVyBcR5AE2kwY7akcmM0O3dDJ5TccY3ew0U9Ux7wsQs/pub?start=false&amp;loop=false&amp;delayms=3000&amp;utm_content=buffer7886e&amp;utm_medium=social&amp;utm_source=twitter.com&amp;utm_campaign=buffer#slide=id.p">https://docs.google.com/presentation/d/1BVyBcR5AE2kwY7akcmM0O3dDJ5TccY3ew0U9Ux7wsQs/pub?start=false&amp;loop=false&amp;delayms=3000&amp;utm_content=buffer7886e&amp;utm_medium=social&amp;utm_source=twitter.com&amp;utm_campaign=buffer#slide=id.p</a></p>
-
-<p>[JustCode &ndash; Otimizando Performance com Compactação Gzip/Deflate]
-<a href="http://blog.glaucocustodio.com/2012/09/22/otimizando-performance-com-compactacao-gzip-deflate/">http://blog.glaucocustodio.com/2012/09/22/otimizando-performance-com-compactacao-gzip-deflate/</a></p>
-
-<p>[Sanwebe &ndash; mple Chat Using WebSocket and PHP Socket &ndash; EN]
-<a href="http://www.sanwebe.com/2013/05/chat-using-websocket-php-socket">http://www.sanwebe.com/2013/05/chat-using-websocket-php-socket</a></p>
-
-<p>[Ratchet &ndash; Lib]
-<a href="http://socketo.me/">http://socketo.me/</a></p>
-
-<p>[socket.io]
-<a href="http://socket.io/">http://socket.io/</a></p>
 ]]></content>
   </entry>
   
