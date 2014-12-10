@@ -98,6 +98,7 @@ figure.code{
 	}
 	.highlight{
 		overflow-x: auto;
+		max-height: 300px;
 	}
 	.line-numbers{
 		border-right: 1px solid $pre-border;
