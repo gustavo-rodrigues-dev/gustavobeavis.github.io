@@ -1,0 +1,7 @@
+<div class="highlight"><pre><span class="k">public</span> <span class="k">function</span> <span class="nf">onOpen</span><span class="p">(</span><span class="nx">ConnectionInterface</span> <span class="nv">$conn</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Store the new connection to send messages to later</span>
+  <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">clients</span><span class="o">-&gt;</span><span class="na">attach</span><span class="p">(</span><span class="nv">$conn</span><span class="p">);</span>
+
+  <span class="k">echo</span> <span class="s2">&quot;New connection! (</span><span class="si">{</span><span class="nv">$conn</span><span class="o">-&gt;</span><span class="na">resourceId</span><span class="si">}</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>

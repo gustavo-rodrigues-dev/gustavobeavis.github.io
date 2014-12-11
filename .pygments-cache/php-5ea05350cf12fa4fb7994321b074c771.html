@@ -1,0 +1,99 @@
+<div class="highlight"><pre><span class="k">include_once</span> <span class="s2">&quot;Image.php&quot;</span><span class="p">;</span>
+
+<span class="sd">/**</span>
+<span class="sd"> * Class imageGenerateGD</span>
+<span class="sd"> */</span>
+<span class="k">class</span> <span class="nc">imageGenerateGD</span> <span class="k">implements</span>  <span class="nx">Image</span><span class="p">{</span>
+    <span class="k">private</span> <span class="nv">$image</span><span class="p">;</span>
+
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__construct</span><span class="p">(){</span>
+        <span class="nv">$options</span> <span class="o">=</span> <span class="nb">func_get_args</span><span class="p">();</span>
+        <span class="k">if</span><span class="p">(</span><span class="nb">count</span><span class="p">(</span><span class="nv">$options</span><span class="p">)){</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">open</span><span class="p">(</span><span class="nv">$options</span><span class="p">[</span><span class="mi">0</span><span class="p">]);</span>
+        <span class="p">}</span>
+
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param $file</span>
+<span class="sd">     * @param string $anchor</span>
+<span class="sd">     * @return $this</span>
+<span class="sd">     */</span>
+    <span class="k">function</span> <span class="nf">open</span><span class="p">(</span><span class="nv">$file</span><span class="p">,</span> <span class="nv">$anchor</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="p">){</span>
+        <span class="nv">$imagePath</span> <span class="o">=</span> <span class="nv">$anchor</span><span class="o">.</span><span class="nv">$file</span><span class="p">;</span>
+        <span class="k">switch</span> <span class="p">(</span><span class="nb">pathinfo</span><span class="p">(</span><span class="nv">$imagePath</span><span class="p">))</span> <span class="p">{</span>
+            <span class="k">case</span> <span class="s1">&#39;gif&#39;</span><span class="o">:</span>
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span> <span class="o">=</span> <span class="nx">imagecreatefromgif</span><span class="p">(</span><span class="nv">$imagePath</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s1">&#39;png&#39;</span><span class="o">:</span>
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span> <span class="o">=</span> <span class="nx">imagecreatefrompng</span><span class="p">(</span><span class="nv">$imagePath</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="k">case</span> <span class="s1">&#39;jpg&#39;</span><span class="o">:</span>
+            <span class="k">case</span> <span class="s1">&#39;jpeg&#39;</span><span class="o">:</span>
+            <span class="k">case</span> <span class="s1">&#39;pjpeg&#39;</span><span class="o">:</span>
+            <span class="k">default</span><span class="o">:</span>
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span> <span class="o">=</span> <span class="nx">imagecreatefromjpeg</span><span class="p">(</span><span class="nv">$imagePath</span><span class="p">);</span>
+                <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nx">imagealphablending</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+        <span class="nx">imagesavealpha</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+        <span class="nx">imagecolorallocate</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span>
+
+        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param $width</span>
+<span class="sd">     * @param $height</span>
+<span class="sd">     * @return $this</span>
+<span class="sd">     */</span>
+    <span class="k">function</span> <span class="nf">resize</span><span class="p">(</span><span class="nv">$width</span> <span class="o">=</span> <span class="mi">160</span><span class="p">,</span> <span class="nv">$height</span> <span class="o">=</span> <span class="mi">160</span><span class="p">){</span>
+
+        <span class="c1">// get the current image dimensions</span>
+        <span class="nv">$geo</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+            <span class="s1">&#39;width&#39;</span>     <span class="o">=&gt;</span>  <span class="nx">imagesx</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">),</span>
+            <span class="s1">&#39;height&#39;</span>    <span class="o">=&gt;</span>  <span class="nx">imagesy</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">)</span>
+        <span class="p">);</span>
+
+        <span class="nv">$original_aspect</span> <span class="o">=</span> <span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">];</span>
+        <span class="nv">$thumb_aspect</span> <span class="o">=</span> <span class="nv">$width</span> <span class="o">/</span> <span class="nv">$height</span><span class="p">;</span>
+
+        <span class="k">if</span> <span class="p">(</span> <span class="nv">$original_aspect</span> <span class="o">&gt;=</span> <span class="nv">$thumb_aspect</span> <span class="p">)</span>
+        <span class="p">{</span>
+            <span class="c1">// If image is wider than thumbnail (in aspect ratio sense)</span>
+            <span class="nv">$new_height</span> <span class="o">=</span> <span class="nv">$height</span><span class="p">;</span>
+            <span class="nv">$new_width</span> <span class="o">=</span> <span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="nv">$height</span><span class="p">);</span>
+        <span class="p">}</span>
+        <span class="k">else</span>
+        <span class="p">{</span>
+            <span class="c1">// If the thumbnail is wider than the image</span>
+            <span class="nv">$new_width</span> <span class="o">=</span> <span class="nv">$width</span><span class="p">;</span>
+            <span class="nv">$new_height</span> <span class="o">=</span> <span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="nv">$width</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="nv">$thumb</span> <span class="o">=</span> <span class="nx">imagecreatetruecolor</span><span class="p">(</span> <span class="nv">$width</span><span class="p">,</span> <span class="nv">$height</span> <span class="p">);</span>
+
+        <span class="c1">// Resize and crop</span>
+        <span class="nx">imagecopyresampled</span><span class="p">(</span><span class="nv">$thumb</span><span class="p">,</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">,</span>
+            <span class="mi">0</span> <span class="o">-</span> <span class="p">(</span><span class="nv">$new_width</span> <span class="o">-</span> <span class="nv">$width</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="c1">// Center the image horizontally</span>
+            <span class="mi">0</span> <span class="o">-</span> <span class="p">(</span><span class="nv">$new_height</span> <span class="o">-</span> <span class="nv">$height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="c1">// Center the image vertically</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span>
+            <span class="nv">$new_width</span><span class="p">,</span> <span class="nv">$new_height</span><span class="p">,</span>
+            <span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;width&#39;</span><span class="p">],</span> <span class="nv">$geo</span><span class="p">[</span><span class="s1">&#39;height&#39;</span><span class="p">]);</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span> <span class="o">=</span> <span class="nv">$thumb</span><span class="p">;</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param $file</span>
+<span class="sd">     * @param int $quality</span>
+<span class="sd">     * @return $this</span>
+<span class="sd">     */</span>
+    <span class="k">function</span> <span class="nf">save</span><span class="p">(</span><span class="nv">$file</span><span class="p">,</span> <span class="nv">$quality</span> <span class="o">=</span> <span class="mi">90</span><span class="p">){</span>
+        <span class="nx">imagejpeg</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">,</span><span class="nv">$file</span><span class="p">,</span> <span class="nb">intval</span><span class="p">(</span><span class="nv">$quality</span><span class="p">));</span>
+        <span class="nx">imagedestroy</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">image</span><span class="p">);</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>

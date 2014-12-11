@@ -2,36 +2,36 @@
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
         <loc>http://gustavobeavis.github.io/blog/2014/02/03/hello-world/</loc>
-        <lastmod>2014-09-11T01:24:10+00:00</lastmod>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
     </url>
     <url>
         <loc>
-            http://gustavobeavis.github.io/blog/2014/04/04/processando-uma-pilha-e-imagens-sem-traumas/
+            http://gustavobeavis.github.io/blog/2014/04/03/processando-uma-pilha-de-imagens-sem-traumas/
         </loc>
-        <lastmod>2014-09-11T01:13:41+00:00</lastmod>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
     </url>
     <url>
         <loc>http://gustavobeavis.github.io/blog/2014/09/11/web-socket-php/</loc>
-        <lastmod>2014-09-11T10:48:20+00:00</lastmod>
-    </url>
-    <url>
-        <loc>http://gustavobeavis.github.io/robots.txt</loc>
-        <lastmod>2014-01-31T21:24:05+00:00</lastmod>
-    </url>
-    <url>
-        <loc>http://gustavobeavis.github.io/</loc>
-        <lastmod>2014-09-11T10:48:20+00:00</lastmod>
-    </url>
-    <url>
-        <loc>http://gustavobeavis.github.io/blog/categories/</loc>
-        <lastmod>2014-01-31T21:25:58+00:00</lastmod>
-    </url>
-    <url>
-        <loc>http://gustavobeavis.github.io/blog/sobre/</loc>
-        <lastmod>2014-04-06T13:23:39+00:00</lastmod>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
     </url>
     <url>
         <loc>http://gustavobeavis.github.io/blog/archives/</loc>
-        <lastmod>2014-09-11T10:48:20+00:00</lastmod>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://gustavobeavis.github.io/blog/categories/</loc>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://gustavobeavis.github.io/blog/sobre/</loc>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://gustavobeavis.github.io/</loc>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
+    </url>
+    <url>
+        <loc>http://gustavobeavis.github.io/robots.txt</loc>
+        <lastmod>2014-12-10T22:48:56-02:00</lastmod>
     </url>
 </urlset>

@@ -1,0 +1,6 @@
+<div class="highlight"><pre><span class="k">public</span> <span class="k">function</span> <span class="nf">onError</span><span class="p">(</span><span class="nx">ConnectionInterface</span> <span class="nv">$conn</span><span class="p">,</span> <span class="nx">\Exception</span> <span class="nv">$e</span><span class="p">)</span> <span class="p">{</span>
+    <span class="k">echo</span> <span class="s2">&quot;An error has occurred: </span><span class="si">{</span><span class="nv">$e</span><span class="o">-&gt;</span><span class="na">getMessage</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">;</span>
+
+    <span class="nv">$conn</span><span class="o">-&gt;</span><span class="na">close</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>

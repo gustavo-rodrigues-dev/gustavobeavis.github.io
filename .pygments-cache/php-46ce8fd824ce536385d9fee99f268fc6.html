@@ -1,0 +1,23 @@
+<div class="highlight"><pre><span class="k">require_once</span> <span class="s2">&quot;class/RollingCurl.php&quot;</span><span class="p">;</span>
+<span class="nb">define</span> <span class="p">(</span><span class="s1">&#39;URLPREFIX&#39;</span><span class="p">,</span> <span class="s1">&#39;http://127.0.0.1/processaImagem/services/resize.php&#39;</span><span class="p">);</span>
+
+<span class="nv">$origin</span> <span class="o">=</span> <span class="nb">scandir</span><span class="p">(</span><span class="s1">&#39;image/origin&#39;</span><span class="p">);</span>
+<span class="nv">$origin</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$origin</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="nb">count</span><span class="p">(</span><span class="nv">$origin</span><span class="p">));</span>
+
+<span class="nv">$destination</span> <span class="o">=</span> <span class="nb">scandir</span><span class="p">(</span><span class="s1">&#39;image/destination&#39;</span><span class="p">);</span>
+<span class="nv">$destination</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$destination</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="nb">count</span><span class="p">(</span><span class="nv">$destination</span><span class="p">));</span>
+<span class="nv">$terms_list</span> <span class="o">=</span> <span class="nb">array_diff</span><span class="p">(</span><span class="nv">$origin</span><span class="p">,</span> <span class="nv">$destination</span><span class="p">);</span>
+
+<span class="nv">$rc</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">RollingCurl</span><span class="p">();</span>
+<span class="nv">$rc</span><span class="o">-&gt;</span><span class="na">window_size</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span> <span class="c1">// limit requests per batch</span>
+<span class="k">foreach</span> <span class="p">(</span><span class="nv">$terms_list</span> <span class="k">as</span> <span class="nv">$terms</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$search_url</span> <span class="o">=</span> <span class="nx">URLPREFIX</span><span class="o">.</span><span class="s1">&#39;?file=&#39;</span><span class="o">.</span><span class="nb">urlencode</span><span class="p">(</span><span class="s2">&quot;../image/origin/&quot;</span><span class="o">.</span><span class="nv">$terms</span><span class="p">);</span>
+    <span class="nv">$request</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">RollingCurlRequest</span><span class="p">(</span><span class="nv">$search_url</span><span class="p">);</span>
+    <span class="nv">$rc</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nv">$request</span><span class="p">);</span>
+<span class="p">}</span>
+<span class="k">if</span><span class="p">(</span><span class="nv">$rc</span><span class="o">-&gt;</span><span class="na">execute</span><span class="p">()){</span>
+    <span class="k">foreach</span><span class="p">(</span><span class="nv">$rc</span><span class="o">-&gt;</span><span class="na">getReturns</span><span class="p">()</span> <span class="k">as</span> <span class="nv">$key</span> <span class="o">=&gt;</span> <span class="nv">$value</span><span class="p">){</span>
+        <span class="k">echo</span> <span class="nv">$value</span><span class="p">[</span><span class="s1">&#39;return&#39;</span><span class="p">]</span><span class="o">.</span> <span class="s1">&#39;&lt;br&gt;&#39;</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>

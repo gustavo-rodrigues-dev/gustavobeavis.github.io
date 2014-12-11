@@ -1,0 +1,38 @@
+<div class="highlight"><pre><span class="c1">//Unmask incoming framed message</span>
+
+<span class="k">function</span> <span class="nf">unmask</span><span class="p">(</span><span class="nv">$text</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$length</span> <span class="o">=</span> <span class="nb">ord</span><span class="p">(</span><span class="nv">$text</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">&amp;</span> <span class="mi">127</span><span class="p">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="nv">$length</span> <span class="o">==</span> <span class="mi">126</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$masks</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+        <span class="nv">$data</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">elseif</span><span class="p">(</span><span class="nv">$length</span> <span class="o">==</span> <span class="mi">127</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$masks</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+        <span class="nv">$data</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="mi">14</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="p">{</span>
+        <span class="nv">$masks</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">);</span>
+        <span class="nv">$data</span> <span class="o">=</span> <span class="nx">substr</span><span class="p">(</span><span class="nv">$text</span><span class="p">,</span> <span class="mi">6</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="nv">$text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$data</span><span class="p">);</span> <span class="o">++</span><span class="nv">$i</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$text</span> <span class="o">.=</span> <span class="nv">$data</span><span class="p">[</span><span class="nv">$i</span><span class="p">]</span> <span class="o">^</span> <span class="nv">$masks</span><span class="p">[</span><span class="nv">$i</span><span class="o">%</span><span class="mi">4</span><span class="p">];</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="nv">$text</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">//Encode message for transfer to client.</span>
+<span class="k">function</span> <span class="nf">mask</span><span class="p">(</span><span class="nv">$text</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="nv">$b1</span> <span class="o">=</span> <span class="mh">0x80</span> <span class="o">|</span> <span class="p">(</span><span class="mh">0x1</span> <span class="o">&amp;</span> <span class="mh">0x0f</span><span class="p">);</span>
+    <span class="nv">$length</span> <span class="o">=</span> <span class="nb">strlen</span><span class="p">(</span><span class="nv">$text</span><span class="p">);</span>
+
+    <span class="k">if</span><span class="p">(</span><span class="nv">$length</span> <span class="o">&lt;=</span> <span class="mi">125</span><span class="p">)</span>
+        <span class="nv">$header</span> <span class="o">=</span> <span class="nb">pack</span><span class="p">(</span><span class="s1">&#39;CC&#39;</span><span class="p">,</span> <span class="nv">$b1</span><span class="p">,</span> <span class="nv">$length</span><span class="p">);</span>
+    <span class="k">elseif</span><span class="p">(</span><span class="nv">$length</span> <span class="o">&gt;</span> <span class="mi">125</span> <span class="o">&amp;&amp;</span> <span class="nv">$length</span> <span class="o">&lt;</span> <span class="mi">65536</span><span class="p">)</span>
+        <span class="nv">$header</span> <span class="o">=</span> <span class="nb">pack</span><span class="p">(</span><span class="s1">&#39;CCn&#39;</span><span class="p">,</span> <span class="nv">$b1</span><span class="p">,</span> <span class="mi">126</span><span class="p">,</span> <span class="nv">$length</span><span class="p">);</span>
+    <span class="k">elseif</span><span class="p">(</span><span class="nv">$length</span> <span class="o">&gt;=</span> <span class="mi">65536</span><span class="p">)</span>
+        <span class="nv">$header</span> <span class="o">=</span> <span class="nb">pack</span><span class="p">(</span><span class="s1">&#39;CCNN&#39;</span><span class="p">,</span> <span class="nv">$b1</span><span class="p">,</span> <span class="mi">127</span><span class="p">,</span> <span class="nv">$length</span><span class="p">);</span>
+    <span class="k">return</span> <span class="nv">$header</span><span class="o">.</span><span class="nv">$text</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>

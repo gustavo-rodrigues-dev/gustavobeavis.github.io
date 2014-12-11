@@ -1,0 +1,23 @@
+<div class="highlight"><pre><span class="sd">/**</span>
+<span class="sd"> * Interface Image</span>
+<span class="sd"> */</span>
+<span class="k">interface</span> <span class="nx">Image</span><span class="p">{</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param $file</span>
+<span class="sd">     * @param $anchor</span>
+<span class="sd">     */</span>
+    <span class="k">function</span> <span class="nf">open</span><span class="p">(</span><span class="nv">$file</span><span class="p">,</span> <span class="nv">$anchor</span><span class="p">);</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param $width</span>
+<span class="sd">     * @param $height</span>
+<span class="sd">     */</span>
+    <span class="k">function</span> <span class="nf">resize</span><span class="p">(</span><span class="nv">$width</span><span class="p">,</span> <span class="nv">$height</span><span class="p">);</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param $file</span>
+<span class="sd">     * @param $quality</span>
+<span class="sd">     */</span>
+    <span class="k">function</span> <span class="nf">save</span><span class="p">(</span><span class="nv">$file</span><span class="p">,</span> <span class="nv">$quality</span><span class="p">);</span>
+</pre></div>

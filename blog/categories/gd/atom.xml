@@ -4,7 +4,7 @@
   <title><![CDATA[Category: GD | Gustavo Rodrigues]]></title>
   <link href="http://gustavobeavis.github.io/blog/categories/gd/atom.xml" rel="self"/>
   <link href="http://gustavobeavis.github.io/"/>
-  <updated>2014-09-11T10:51:39+00:00</updated>
+  <updated>2014-12-10T22:50:19-02:00</updated>
   <id>http://gustavobeavis.github.io/</id>
   <author>
     <name><![CDATA[Gustavo da Silva Rodrigues]]></name>
@@ -15,22 +15,24 @@
   
   <entry>
     <title type="html"><![CDATA[Processando Uma Pilha De Imagens Sem Traumas]]></title>
-    <link href="http://gustavobeavis.github.io/blog/2014/04/04/processando-uma-pilha-e-imagens-sem-traumas/"/>
-    <updated>2014-04-04T19:45:14+00:00</updated>
-    <id>http://gustavobeavis.github.io/blog/2014/04/04/processando-uma-pilha-e-imagens-sem-traumas</id>
-    <content type="html"><![CDATA[<p>Quem nunca precisou processar um número consideravel de imagens para um relatório, não tem idéia da dor de cabeça que isso pode dar.
-Em um mundo ideal, todo thumb ou imagem tratada, é gerada no momento do upload, porém por diversos fatores, podemos nos deparar com a necessidade de fazer isso sob demanda, e como todos sabemos, isso pode implicar em uma série de problemas, como demora ao gerar essas imagens, e em situações mais graves, podemos ter um estouro de memória, lentidão no servidor, timeout na execução, em fim, tudo que você não quer fazer.</p>
+    <link href="http://gustavobeavis.github.io/blog/2014/04/03/processando-uma-pilha-de-imagens-sem-traumas/"/>
+    <updated>2014-04-03T23:09:59-03:00</updated>
+    <id>http://gustavobeavis.github.io/blog/2014/04/03/processando-uma-pilha-de-imagens-sem-traumas</id>
+    <content type="html"><![CDATA[<p><img src="/../images/destaque_reduz_image.png" alt="imagem" /></p>
 
-<p>Pensando nisso, vamos desenvolver uma solução que ataca os principais gargalos desse tipo de tarefa, que são a ausência de <strong>threds</strong> em PHP e o processo de <strong>IO</strong>.</p>
+<p>Quem nunca precisou processar um número consideravel de imagens para um relatório, não tem idéia da dor de cabeça que isso pode dar. Em um mundo ideal, todo thumb ou imagem tratada, é gerada no momento do upload, porém por diversos fatores, podemos nos deparar com a necessidade de fazer isso sob demanda, e como todos sabemos, isso pode implicar em uma série de problemas, como demora ao gerar essas imagens, e em situações mais graves, podemos ter um estouro de memória, lentidão no servidor, timeout na execução, em fim, tudo que você não quer fazer.</p>
+
+<p>Pensando nisso, vamos desenvolver uma solução que ataca os principais gargalos desse tipo de tarefa, que são a ausência de <strong>threds</strong> em <strong>PHP</strong> e o processo de <strong>IO</strong>.</p>
 
 <h2>Solução</h2>
 
-<p>Vamos criar um processo capaz de criar thumbs de imagens que ainda não foram criadas, de modo que, antes de começarmos a processar nossa pilha de imagens saberemos o que devemos ou não criar, além disso, ao invés de checar a existência dessas imagens em um loop de <em>file_exists</em>, vamos primeiro listar todos os arquivos da pasta desitino e guardar em um array (uma unica requisição ao invés de varias requisições em um loop de file exists), depois disso vamos fazer um diff contains dos dos arrays de images a serem processadas com as imagens do servidor, ai o array resultante, é o array de imagens que precisamos criar (que não estão no servidor).</p>
+<p>Iremos desenvolver um serviço capaz de de criar as imagens que ainda não foram criadas, e melhor, paralelamente, e usando um recurso que não usa diretamente a thread do <strong>php</strong></p>
 
 <h3>Checando os arquivos a serem gerados</h3>
 
-<p><strong>index.php:</strong>
-```php
+<p>Vamos criar um processo capaz de criar thumbs de imagens que ainda não foram criadas, de modo que, antes de começarmos a processar nossa pilha de imagens saberemos o que devemos ou não criar, além disso, ao invés de checar a existência dessas imagens em um loop de file_exists, vamos primeiro listar todos os arquivos da pasta destino e guardar em um array (uma única requisição ao invés de varias requisições em um loop de file_exists), depois disso vamos fazer um diff_contains dos dos arrays de images a serem processadas com as imagens do servidor, ai o array resultante, é o array de imagens que precisamos criar (que não estão no servidor).</p>
+
+<p>```php
 // Origem
 $origin = scandir(&lsquo;image/origin&rsquo;);
 $origin = array_slice($origin,2,count($origin));</p>
@@ -43,23 +45,21 @@ $destination = array_slice($destination,2,count($destination));</p>
 $terms_list = array_diff($origin, $destination);
 ```</p>
 
-<p>Já resolvemos o primeiro problema, que é checar quais imagens devemos criar os thumbs, agora temos dois problemas, na verdade um, só que dividido em duas partes, que é o processo de gerar e salvar as imagens. E como todos nós sabemos, todo processo de IO é custoso, isso sem contar com o custo de processamento que o PHP tem ao tratar essas imagens antes de salva-la.
-Como não temos threds no PHP, temos que gerar uma fila de execução, o que gera um grande buzy-waiting, de modo que pode até causar um timeout do servidor.
-Para resolver esse problema, precisamos dividir esse processo em duas partes, a primeira é processar as imagens em paralelo (usando o cURL mult exec), depois usar a solução mais eficaz para processar as imagens que é usar o Imagick ao invés do GD.</p>
-
-<blockquote><p><strong>Porque Imagick:</strong></p>
-
-<p>O Imagick ao contrario do GD executa seus processos fora do PHP, ou seja, ele não vai consumir o processo do PHP para fazer sua mágica, além disso, se compararmos a qualidade da imagem gerada entre um e outro, o Imagick consegue ter um nivel bem superior ao GD.</p></blockquote>
-
 <h3>Criando os Thumbs</h3>
 
-<p>Vamos criar uma classe capaz de usar ambas as bibliotecas, pois, desse modo, independete de ter ou não o Imagck no servidor, essas imagens vão ser geradas.</p>
+<p>Já resolvemos o primeiro problema, que é checar quais imagens devemos criar os thumbs, agora temos dois problemas, na verdade um, só que dividido em duas partes, que é o processo de gerar e salvar as imagens. E como todos nós sabemos, todo processo de IO é custoso, isso sem contar com o custo de processamento que o PHP tem ao tratar essas imagens antes de salva-la. Como não temos threds no PHP, temos que gerar uma fila de execução, o que gera um grande buzy-waiting, de modo que pode até causar um timeout do servidor. Para resolver esse problema, precisamos dividir esse processo em duas partes, a primeira é processar as imagens em paralelo (usando o cURL mult_exec), depois usar a solução mais eficaz para processar as imagens que é usar o <strong>Imagemagick</strong> ao invés do GD.</p>
 
-<h4>Interface Image</h4>
+<blockquote><p><strong>Por que Imagemagick?</strong></p>
+
+<p>O Imagemagick ao contrario do GD executa seus processos fora do PHP, ou seja, ele não vai consumir o processo do PHP para fazer sua mágica, além disso, se compararmos a qualidade da imagem gerada entre um e outro, o Imagemagick consegue ter um nível bem superior ao GD.</p></blockquote>
+
+<p>Vamos criar uma classe capaz de usar ambas as bibliotecas, pois, desse modo, independente de haver ou não o Imagemagick no servidor, essas imagens serão geradas.</p>
+
+<h5>Interface Image</h5>
 
 <p>Vamos primeiramente criar um contrato, para que todas as classes de imagens apliquem os métodos usando o mesmo critério, embora de modo diferente.</p>
 
-<p><strong>Image.php:</strong>
+<p><strong><em>Image.php</em></strong>:
 ```php
 /<em>*
  * Interface Image
@@ -87,11 +87,11 @@ function save($file, $quality);
 
 <p>```</p>
 
-<h4>Classe imageGenerateGD</h4>
+<h5>Classe imageGenerateGD</h5>
 
-<p>Feito Isso, vamos criar nossa Classe que usa o GD para criar nossos thumbs</p>
+<p>Feito Isso, vamos criar nossa Classe que usa o GD para criar nossos thumbs.</p>
 
-<p><strong>imageGenerateGD.php:</strong>
+<p><strong><em>imageGenerateGD.php</em></strong>:
 ```php
 include_once &ldquo;Image.php&rdquo;;</p>
 
@@ -193,22 +193,21 @@ function save($file, $quality = 90){
 }
 </code></pre>
 
-<p>}</p>
+<p>}
+```</p>
 
-<p>```</p>
+<h5>Classe imageGenerateImagick</h5>
 
-<h4>Classe imageGenerateImagick</h4>
+<p>Agora vamos criar nossa classe que usa o Imagemagick para criar os thumbs.</p>
 
-<p>Agora vamos criar nossa classe que usa o Imagick para criar os thumbs</p>
-
-<p><strong>imageGenerateImagick.php:</strong>
+<p><strong><em>imageGenerateImagick.php</em></strong>:
 ```php
 include_once &ldquo;Image.php&rdquo;;</p>
 
 <p>/<em>*
  * Class imageGenerateImagick
  </em>/
-class imageGenerateImagick implements  Image{</p>
+class imageGenerateImagick implements Image{</p>
 
 <pre><code>private $image;
 
@@ -268,15 +267,14 @@ function save($file, $quality = 80){
 }
 </code></pre>
 
-<p>}</p>
+<p>}
+```</p>
 
-<p>```</p>
+<h5>Classe ImageGenerate</h5>
 
-<h4>Classe ImageGenerate</h4>
+<p>Vamos criar nossa classe que implementa ambas as classes, de GD e imagick, no caso, você irá definir qual recurso ele vai usar, e além disso, ele vai checar se tem e extensão do imagick, de modo que se não houver, o sistema irá utilizar o GD.</p>
 
-<p>Vamos criar nossa classe que implementa ambas as classes, de GD e Imagick, no caso, você irá definir qual recurso ele vai usar, e além disso, ele vai checar se tem e extensão do Imagcik, de modo que se não houver, o sistema irá utilizar o GD.</p>
-
-<p><strong>ImageGenerate.php:</strong>
+<p><strong><em>ImageGenerate.php</em></strong>:
 ```php
 include_once &ldquo;Image.php&rdquo;;
 include_once &ldquo;ImageGenerateImagick.php&rdquo;;
@@ -358,15 +356,14 @@ function save($file, $quality = 80){
 }
 </code></pre>
 
-<p>}</p>
-
-<p>```</p>
+<p>}
+```</p>
 
 <h3>Criando o serviço de crop</h3>
 
 <p>Agora que já temos nossas classes de imagem, vamos criar um serviço ou melhor, uma API, que ao receber como parâmetro o nome e caminho da imagem de origem, ela se encarrega de gerar o thumb usando nossa classe.</p>
 
-<p><strong>resize.php:</strong>
+<p><strong><em>resize.php</em></strong>:
 ```php
 header(&lsquo;Content-Type: application/json&rsquo;);
 if($_REQUEST[&lsquo;file&rsquo;]){</p>
@@ -399,20 +396,17 @@ if(file_exists($_REQUEST['file'])){
 ), true);
 </code></pre>
 
-<p>}</p>
-
-<p>```</p>
+<p>}
+```</p>
 
 <h3>Processando nossas imagens em paralelo</h3>
 
-<p>Agora que criamos nossas classes de imagens, e a API que gera as imagens, vamos criar uma página que utiliza um recurso do <strong>cURL</strong>, que é o <strong><em>curl_multi_exec</em></strong>, ele permite multiplas requisições simultãneas a nossa API. No nosso caso, utilizamos uma Classe chamada <a href="https://github.com/takinbo/rolling-curl">RollingCurl</a>, ela permite fazer essas chamadas paralelas, permitindo fazer os processos em lotes definidos, por exemplo, executar lotes de 5 em 5 imagens, após completar um lote, ele chama outro, até o fim do processamento.
-Fizemos apenas uma alteração, que foi criar um método que armazena todas as respostas em um array.</p>
+<p>Agora que criamos nossas classes de imagens, e a API que gera as imagens, vamos criar uma página que utiliza um recurso do <strong>cURL</strong>, que é o <strong>curl_multi_exec</strong>, ele permite múltiplas requisições simultâneas a nossa API. No nosso caso, utilizamos uma Classe chamada <strong><a href="https://github.com/takinbo/rolling-curl">RollingCurl</a></strong>, ela permite fazer essas chamadas paralelas, permitindo fazer os processos em lotes definidos, por exemplo, executar lotes de 5 em 5 imagens, após completar um lote, ele chama outro, até o fim do processamento. Fizemos apenas uma alteração, que foi criar um método que armazena todas as respostas em um array.</p>
 
-<blockquote><p><strong>Cuidado</strong></p>
+<blockquote><p><strong>Cuidado</strong>
+Requisições paralelas são recursos que devem ser usados com consciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor (Não queremos fazer um auto ataque <strong>DDos</strong>).</p></blockquote>
 
-<p>Requisições paralelas são recursos que devem ser usados com conciência, pois você irá forçar o seu servidor a processar <strong>N</strong> vezes em paralelo um determinado recurso, e se considerarmos que podemos ter <strong>X</strong> pessoas usando esse serviço ao mesmo tempo, podemos até derrubar nosso servidor (Não queremos fazer um auto ataque DDos).</p></blockquote>
-
-<p><strong>RollingCurl.php:</strong>
+<p><strong><em>RollingCurl.php</em></strong>:
 ```php
 /*
 Authored by Josh Fraser (www.joshfraser.com)
@@ -426,15 +420,14 @@ Released under Apache License 2.0</p>
 <p>/<em>*
  * Class that represent a single curl request
  </em>/
-class RollingCurlRequest {</p>
+class RollingCurlRequest {
+  public $url = false;
+  public $method = &lsquo;GET&rsquo;;
+  public $post_data = null;
+  public $headers = null;
+  public $options = null;</p>
 
-<pre><code>public $url = false;
-public $method = 'GET';
-public $post_data = null;
-public $headers = null;
-public $options = null;
-
-/**
+<pre><code>/**
  * @param string $url
  * @param string $method
  * @param  $post_data
@@ -476,369 +469,974 @@ class RollingCurl {</p>
  * @var int
  *
  * Window size is the max number of simultaneous connections allowed.
- * 
- * REMEMBER TO RESPECT THE SERVERS:
- * Sending too many requests at one time can easily be perceived
- * as a DOS attack. Increase this window_size if you are making requests
- * to multiple servers or have permission from the receving server admins.
- */
-private $window_size = 5;
+</code></pre>
 
-/**
- * @var float
- *
- * Timeout is the timeout used for curl_multi_select.
- */
-private $timeout = 10;
+<ul>
+<li><ul>
+<li>REMEMBER TO RESPECT THE SERVERS:</li>
+<li>Sending too many requests at one time can easily be perceived</li>
+<li>as a DOS attack. Increase this window_size if you are making requests</li>
+<li>to multiple servers or have permission from the receving server admins.
+*/
+private $window_size = 5;</li>
+</ul>
 
-/**
- * @var string|array
- *
- * Callback function to be applied to each result.
- */
-private $callback;
 
-/**
- * @var array
- *
- * Set your base options that you want to be used with EVERY request.
- */
+<p>/**</p>
+
+<ul>
+<li>@var float
+*</li>
+<li>Timeout is the timeout used for curl_multi_select.
+*/
+private $timeout = 10;</li>
+</ul>
+
+
+<p>/**</p>
+
+<ul>
+<li>@var string|array
+*</li>
+<li>Callback function to be applied to each result.
+*/
+private $callback;</li>
+</ul>
+
+
+<p>/**</p>
+
+<ul>
+<li>@var array
+*</li>
+<li>Set your base options that you want to be used with EVERY request.
+*/
 protected $options = array(
-    CURLOPT_SSL_VERIFYPEER =&gt; 0,
-    CURLOPT_RETURNTRANSFER =&gt; 1,
-    CURLOPT_CONNECTTIMEOUT =&gt; 30,
-    CURLOPT_TIMEOUT =&gt; 30
-);
+CURLOPT_SSL_VERIFYPEER => 0,
+ CURLOPT_RETURNTRANSFER => 1,
+ CURLOPT_CONNECTTIMEOUT => 30,
+ CURLOPT_TIMEOUT => 30
+);</li>
+</ul>
 
-/**
- * @var array
- */
-private $headers = array();
 
-/**
- * @var Request[]
- *
- * The request queue
- */
-private $requests = array();
+<p>  /**</p>
 
-/**
- * @var RequestMap[]
- *
- * Maps handles to request indexes
- */
-private $requestMap = array();
+<ul>
+<li> @var array
+*/
+private $headers = array();</li>
+</ul>
 
-/**
- * @var returns[]
- *
- * All returns of requests
- */
-private $returns = array();
 
-/**
- * @param  $callback
- * Callback function to be applied to each result.
- *
- * Can be specified as 'my_callback_function'
- * or array($object, 'my_callback_method').
- *
- * Function should take three parameters: $response, $info, $request.
- * $response is response body, $info is additional curl info.
- * $request is the original request
- *
- * @return void
- */
+<p>  /**</p>
+
+<ul>
+<li> @var Request[]
+*</li>
+<li> The request queue
+*/
+private $requests = array();</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @var RequestMap[]
+*</li>
+<li> Maps handles to request indexes
+*/
+private $requestMap = array();</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @var returns[]
+*</li>
+<li> All returns of requests
+*/
+private $returns = array();</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @param  $callback</li>
+<li> Callback function to be applied to each result.
+*</li>
+<li> Can be specified as &lsquo;my_callback_function&rsquo;</li>
+<li> or array($object, &lsquo;my_callback_method&rsquo;).
+*</li>
+<li> Function should take three parameters: $response, $info, $request.</li>
+<li> $response is response body, $info is additional curl info.</li>
+<li> $request is the original request
+*</li>
+<li> @return void
+*/
 function __construct($callback = null) {
-    $this-&gt;callback = $callback;
-}
+  $this->callback = $callback;
+}</li>
+</ul>
 
-/**
- * @param string $name
- * @return mixed
- */
+
+<p>  /**</p>
+
+<ul>
+<li> @param string $name</li>
+<li> @return mixed
+*/
 public function __get($name) {
-    return (isset($this-&gt;{$name})) ? $this-&gt;{$name} : null;
-}
+  return (isset($this->{$name})) ? $this->{$name} : null;
+}</li>
+</ul>
 
-/**
- * @param string $name
- * @param mixed $value
- * @return bool
- */
+
+<p>  /**</p>
+
+<ul>
+<li> @param string $name</li>
+<li> @param mixed $value</li>
+<li> @return bool
+*/
 public function __set($name, $value){
-    // append the base options &amp; headers
-    if ($name == "options" || $name == "headers") {
-        $this-&gt;{$name} = $value + $this-&gt;{$name};
-    } else {
-        $this-&gt;{$name} = $value;
-    }
-    return true;
-}
+  // append the base options &amp; headers
+  if ($name == &ldquo;options&rdquo; || $name == &ldquo;headers&rdquo;) {
+      $this->{$name} = $value + $this->{$name};
+  } else {
+      $this->{$name} = $value;
+  }
+  return true;
+}</li>
+</ul>
 
-/**
- * Add a request to the request queue
- *
- * @param Request $request
- * @return bool
- */
+
+<p>  /**</p>
+
+<ul>
+<li> Add a request to the request queue
+*</li>
+<li> @param Request $request</li>
+<li> @return bool
+*/
 public function add($request) {
-     $this-&gt;requests[] = $request;
-     return true;
-}
+   $this->requests[] = $request;
+   return true;
+}</li>
+</ul>
 
-/**
- * @param \returns[] $returns
- */
+
+<p>  /**</p>
+
+<ul>
+<li> @param \returns[] $returns
+*/
 public function setReturns($returns)
 {
-    $this-&gt;returns = $returns;
-}
+  $this->returns = $returns;
+}</li>
+</ul>
 
-/**
- * @return \returns[]
- */
+
+<p>  /**</p>
+
+<ul>
+<li> @return \returns[]
+*/
 public function getReturns()
 {
-    return $this-&gt;returns;
-}
+  return $this->returns;
+}</li>
+</ul>
 
-/**
- * Create new Request and add it to the request queue
- *
+
+<p>  /**</p>
+
+<ul>
+<li> Create new Request and add it to the request queue
+*</li>
+<li> @param string $url</li>
+<li> @param string $method</li>
+<li> @param  $post_data</li>
+<li> @param  $headers</li>
+<li> @param  $options</li>
+<li> @return bool
+*/
+public function request($url, $method = &ldquo;GET&rdquo;, $post_data = null, $headers = null, $options = null) {
+   $this->requests[] = new RollingCurlRequest($url, $method, $post_data, $headers, $options);
+   return true;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Perform GET request
+*</li>
+<li> @param string $url</li>
+<li> @param  $headers</li>
+<li> @param  $options</li>
+<li> @return bool
+*/
+public function get($url, $headers = null, $options = null) {
+  return $this->request($url, &ldquo;GET&rdquo;, null, $headers, $options);
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Perform POST request
+*</li>
+<li> @param string $url</li>
+<li> @param  $post_data</li>
+<li> @param  $headers</li>
+<li> @param  $options</li>
+<li> @return bool
+*/
+public function post($url, $post_data = null, $headers = null, $options = null) {
+  return $this->request($url, &ldquo;POST&rdquo;, $post_data, $headers, $options);
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Execute the curl
+*</li>
+<li> @param int $window_size Max number of simultaneous connections</li>
+<li> @return string|bool
+*/
+public function execute($window_size = null) {
+  // rolling curl window must always be greater than 1
+  if (sizeof($this->requests) == 1) {
+      return $this->single_curl();
+  } else {
+      // start the rolling curl. window_size is the max number of simultaneous connections
+      return $this->rolling_curl($window_size);
+  }
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Performs a single curl request
+*</li>
+<li> @access private</li>
+<li><p> @return string
+*/
+private function single_curl() {
+  $ch = curl_init();    <br/>
+  $request = array_shift($this->requests);
+  $options = $this->get_options($request);
+  curl_setopt_array($ch,$options);
+  $output = curl_exec($ch);
+  $info = curl_getinfo($ch);</p>
+
+<p>  // it&rsquo;s not neccesary to set a callback for one-off requests
+  if ($this->callback) {
+      $callback = $this->callback;
+      if (is_callable($this->callback)){
+          call_user_func($callback, $output, $info, $request);
+      }
+  }
+else
+      return $output;
+return true;
+}</p></li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Performs multiple curl requests
+*</li>
+<li> @access private</li>
+<li> @throws RollingCurlException</li>
+<li> @param int $window_size Max number of simultaneous connections</li>
+<li><p> @return bool
+*/
+private function rolling_curl($window_size = null) {
+  if ($window_size)
+      $this->window_size = $window_size;</p>
+
+<p>  // make sure the rolling window isn&rsquo;t greater than the # of urls
+  if (sizeof($this->requests) &lt; $this->window_size)
+      $this->window_size = sizeof($this->requests);</p>
+
+<p>  if ($this->window_size &lt; 2) {
+      throw new RollingCurlException(&ldquo;Window size must be greater than 1&rdquo;);
+  }</p>
+
+<p>  $master = curl_multi_init();</p>
+
+<p>  // start the first batch of requests
+  for ($i = 0; $i &lt; $this->window_size; $i++) {
+      $ch = curl_init();</p>
+
+<pre><code>  $options = $this-&gt;get_options($this-&gt;requests[$i]);
+
+  curl_setopt_array($ch,$options);
+  curl_multi_add_handle($master, $ch);
+
+  // Add to our request Maps
+  $key = (string) $ch;
+  $this-&gt;requestMap[$key] = $i;
+</code></pre>
+
+<p>  }</p>
+
+<p>  do {
+      while(($execrun = curl_multi_exec($master, $running)) == CURLM_CALL_MULTI_PERFORM);
+      if($execrun != CURLM_OK) {
+          break;
+      }
+      // a request was just completed &mdash; find out which one
+      while($done = curl_multi_info_read($master)) {</p>
+
+<pre><code>      // get the info and content returned on the request
+      $info = curl_getinfo($done['handle']);
+      $output = curl_multi_getcontent($done['handle']);
+
+      array_push($this-&gt;returns, array(
+          'return'    =&gt;  $output,
+          'info'      =&gt;  $info,
+      ));
+
+      // send the return values to the callback function.
+      $callback = $this-&gt;callback;
+      if (is_callable($callback)){
+    $key = (string)$done['handle'];
+          $request = $this-&gt;requests[$this-&gt;requestMap[$key]];
+          unset($this-&gt;requestMap[$key]);
+          call_user_func($callback, $output, $info, $request);
+      }
+
+      // start a new request (it's important to do this before removing the old one)
+      if ($i &lt; sizeof($this-&gt;requests) &amp;&amp; isset($this-&gt;requests[$i]) &amp;&amp; $i &lt; count($this-&gt;requests)) {
+          $ch = curl_init();
+          $options = $this-&gt;get_options($this-&gt;requests[$i]);
+          curl_setopt_array($ch,$options);
+          curl_multi_add_handle($master, $ch);
+
+          // Add to our request Maps
+          $key = (string) $ch;
+          $this-&gt;requestMap[$key] = $i;
+          $i++;
+      }
+
+      // remove the curl handle that just completed
+      curl_multi_remove_handle($master, $done['handle']);
+
+  }
+
+  // Block for data in / output; error handling is done by curl_multi_exec
+  if ($running) {
+      curl_multi_select($master, $this-&gt;timeout);
+  }
+</code></pre>
+
+<p>  } while ($running);
+  curl_multi_close($master);
+  return true;
+}</p></li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Helper function to set up a new request by setting the appropriate options
+*</li>
+<li> @access private</li>
+<li> @param Request $request</li>
+<li><p> @return array
+*/
+private function get_options($request) {
+  // options for this entire curl object
+  $options = $this-><strong>get(&lsquo;options&rsquo;);
+  // NOTE: The PHP cURL library won&rsquo;t follow redirects if either safe_mode is on
+  // or open_basedir is defined.
+  // See: <a href="https://bugs.php.net/bug.php?id=30609">https://bugs.php.net/bug.php?id=30609</a>
+if (( ini_get(&lsquo;safe_mode&rsquo;) == &lsquo;Off&rsquo; || !ini_get(&lsquo;safe_mode&rsquo;) )
+      &amp;&amp; ini_get(&lsquo;open_basedir&rsquo;) == &lsquo;&rsquo;) {
+      $options[CURLOPT_FOLLOWLOCATION] = 1;
+    $options[CURLOPT_MAXREDIRS] = 5;
+  }
+  $headers = $this-></strong>get(&lsquo;headers&rsquo;);</p>
+
+<p>// append custom options for this specific request
+if ($request->options) {
+      $options = $request->options + $options;
+  }</p>
+
+<p>// set the request URL
+  $options[CURLOPT_URL] = $request->url;</p>
+
+<p>  // posting data w/ this request?
+  if ($request->post_data) {
+      $options[CURLOPT_POST] = 1;
+      $options[CURLOPT_POSTFIELDS] = $request->post_data;
+  }
+  if ($headers) {
+      $options[CURLOPT_HEADER] = 0;
+      $options[CURLOPT_HTTPHEADER] = $headers;
+  }</p>
+
+<p>  // Due to a bug in cURL CURLOPT_WRITEFUNCTION must be defined as the last option
+  // Otherwise it doesn&rsquo;t register. So let&rsquo;s unset and set it again
+  // See <a href="http://stackoverflow.com/questions/15937055/curl-writefunction-not-being-called">http://stackoverflow.com/questions/15937055/curl-writefunction-not-being-called</a>
+  if( ! empty( $options[CURLOPT_WRITEFUNCTION]) ) {
+      $writeCallback = $options[CURLOPT_WRITEFUNCTION];
+      unset( $options[CURLOPT_WRITEFUNCTION] );
+      $options[CURLOPT_WRITEFUNCTION] = $writeCallback;
+  }</p>
+
+<p>  return $options;
+}</p></li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @return void
+*/
+public function __destruct() {
+  unset($this->window_size, $this->callback, $this->options, $this->headers, $this->requests);
+}
+}
+```</li>
+</ul>
+</li>
+</ul>
+
+
+<p><strong><em>RollingCurl.php</em></strong>:
+```php
+/*
+Authored by Josh Fraser (www.joshfraser.com)
+Released under Apache License 2.0</p>
+
+<p>Maintained by Alexander Makarov, <a href="http://rmcreative.ru/">http://rmcreative.ru/</a></p>
+
+<p>$Id$
+*/</p>
+
+<p>/<em>*
+ * Class that represent a single curl request
+ </em>/
+class RollingCurlRequest {
+  public $url = false;
+  public $method = &lsquo;GET&rsquo;;
+  public $post_data = null;
+  public $headers = null;
+  public $options = null;</p>
+
+<pre><code>/**
  * @param string $url
  * @param string $method
  * @param  $post_data
  * @param  $headers
  * @param  $options
- * @return bool
+ * @return void
  */
-public function request($url, $method = "GET", $post_data = null, $headers = null, $options = null) {
-     $this-&gt;requests[] = new RollingCurlRequest($url, $method, $post_data, $headers, $options);
-     return true;
-}
-
-/**
- * Perform GET request
- *
- * @param string $url
- * @param  $headers
- * @param  $options
- * @return bool
- */
-public function get($url, $headers = null, $options = null) {
-    return $this-&gt;request($url, "GET", null, $headers, $options);
-}
-
-/**
- * Perform POST request
- *
- * @param string $url
- * @param  $post_data
- * @param  $headers
- * @param  $options
- * @return bool
- */
-public function post($url, $post_data = null, $headers = null, $options = null) {
-    return $this-&gt;request($url, "POST", $post_data, $headers, $options);
-}
-
-/**
- * Execute the curl
- *
- * @param int $window_size Max number of simultaneous connections
- * @return string|bool
- */
-public function execute($window_size = null) {
-    // rolling curl window must always be greater than 1
-    if (sizeof($this-&gt;requests) == 1) {
-        return $this-&gt;single_curl();
-    } else {
-        // start the rolling curl. window_size is the max number of simultaneous connections
-        return $this-&gt;rolling_curl($window_size);
-    }
-}
-
-/**
- * Performs a single curl request
- *
- * @access private
- * @return string
- */
-private function single_curl() {
-    $ch = curl_init();      
-    $request = array_shift($this-&gt;requests);
-    $options = $this-&gt;get_options($request);
-    curl_setopt_array($ch,$options);
-    $output = curl_exec($ch);
-    $info = curl_getinfo($ch);
-
-    // it's not neccesary to set a callback for one-off requests
-    if ($this-&gt;callback) {
-        $callback = $this-&gt;callback;
-        if (is_callable($this-&gt;callback)){
-            call_user_func($callback, $output, $info, $request);
-        }
-    }
-    else
-        return $output;
-return true;
-}
-
-/**
- * Performs multiple curl requests
- *
- * @access private
- * @throws RollingCurlException
- * @param int $window_size Max number of simultaneous connections
- * @return bool
- */
-private function rolling_curl($window_size = null) {
-    if ($window_size)
-        $this-&gt;window_size = $window_size;
-
-    // make sure the rolling window isn't greater than the # of urls
-    if (sizeof($this-&gt;requests) &lt; $this-&gt;window_size)
-        $this-&gt;window_size = sizeof($this-&gt;requests);
-
-    if ($this-&gt;window_size &lt; 2) {
-        throw new RollingCurlException("Window size must be greater than 1");
-    }
-
-    $master = curl_multi_init();        
-
-    // start the first batch of requests
-    for ($i = 0; $i &lt; $this-&gt;window_size; $i++) {
-        $ch = curl_init();
-
-        $options = $this-&gt;get_options($this-&gt;requests[$i]);
-
-        curl_setopt_array($ch,$options);
-        curl_multi_add_handle($master, $ch);
-
-        // Add to our request Maps
-        $key = (string) $ch;
-        $this-&gt;requestMap[$key] = $i;
-    }
-
-    do {
-        while(($execrun = curl_multi_exec($master, $running)) == CURLM_CALL_MULTI_PERFORM);
-        if($execrun != CURLM_OK) {
-            break;
-        }
-        // a request was just completed -- find out which one
-        while($done = curl_multi_info_read($master)) {
-
-            // get the info and content returned on the request
-            $info = curl_getinfo($done['handle']);
-            $output = curl_multi_getcontent($done['handle']);
-
-            array_push($this-&gt;returns, array(
-                'return'    =&gt;  $output,
-                'info'      =&gt;  $info,
-            ));
-
-            // send the return values to the callback function.
-            $callback = $this-&gt;callback;
-            if (is_callable($callback)){
-            $key = (string)$done['handle'];
-                $request = $this-&gt;requests[$this-&gt;requestMap[$key]];
-                unset($this-&gt;requestMap[$key]);
-                call_user_func($callback, $output, $info, $request);
-            }
-
-            // start a new request (it's important to do this before removing the old one)
-            if ($i &lt; sizeof($this-&gt;requests) &amp;&amp; isset($this-&gt;requests[$i]) &amp;&amp; $i &lt; count($this-&gt;requests)) {
-                $ch = curl_init();
-                $options = $this-&gt;get_options($this-&gt;requests[$i]);
-                curl_setopt_array($ch,$options);
-                curl_multi_add_handle($master, $ch);
-
-                // Add to our request Maps
-                $key = (string) $ch;
-                $this-&gt;requestMap[$key] = $i;
-                $i++;
-            }
-
-            // remove the curl handle that just completed
-            curl_multi_remove_handle($master, $done['handle']);
-
-        }
-
-        // Block for data in / output; error handling is done by curl_multi_exec
-        if ($running) {
-            curl_multi_select($master, $this-&gt;timeout);
-        }
-
-    } while ($running);
-    curl_multi_close($master);
-    return true;
-}
-
-
-/**
- * Helper function to set up a new request by setting the appropriate options
- *
- * @access private
- * @param Request $request
- * @return array
- */
-private function get_options($request) {
-    // options for this entire curl object
-    $options = $this-&gt;__get('options');
-    // NOTE: The PHP cURL library won't follow redirects if either safe_mode is on
-    // or open_basedir is defined.
-    // See: https://bugs.php.net/bug.php?id=30609
-    if (( ini_get('safe_mode') == 'Off' || !ini_get('safe_mode') )
-        &amp;&amp; ini_get('open_basedir') == '') {
-        $options[CURLOPT_FOLLOWLOCATION] = 1;
-        $options[CURLOPT_MAXREDIRS] = 5;
-    }
-    $headers = $this-&gt;__get('headers');
-
-    // append custom options for this specific request
-    if ($request-&gt;options) {
-        $options = $request-&gt;options + $options;
-    }
-
-    // set the request URL
-    $options[CURLOPT_URL] = $request-&gt;url;
-
-    // posting data w/ this request?
-    if ($request-&gt;post_data) {
-        $options[CURLOPT_POST] = 1;
-        $options[CURLOPT_POSTFIELDS] = $request-&gt;post_data;
-    }
-    if ($headers) {
-        $options[CURLOPT_HEADER] = 0;
-        $options[CURLOPT_HTTPHEADER] = $headers;
-    }
-
-    // Due to a bug in cURL CURLOPT_WRITEFUNCTION must be defined as the last option
-    // Otherwise it doesn't register. So let's unset and set it again
-    // See http://stackoverflow.com/questions/15937055/curl-writefunction-not-being-called
-    if( ! empty( $options[CURLOPT_WRITEFUNCTION]) ) {
-        $writeCallback = $options[CURLOPT_WRITEFUNCTION];
-        unset( $options[CURLOPT_WRITEFUNCTION] );
-        $options[CURLOPT_WRITEFUNCTION] = $writeCallback;
-    }
-
-    return $options;
+function __construct($url, $method = "GET", $post_data = null, $headers = null, $options = null) {
+    $this-&gt;url = $url;
+    $this-&gt;method = $method;
+    $this-&gt;post_data = $post_data;
+    $this-&gt;headers = $headers;
+    $this-&gt;options = $options;
 }
 
 /**
  * @return void
  */
 public function __destruct() {
-    unset($this-&gt;window_size, $this-&gt;callback, $this-&gt;options, $this-&gt;headers, $this-&gt;requests);
+    unset($this-&gt;url, $this-&gt;method, $this-&gt;post_data, $this-&gt;headers, $this-&gt;options);
 }
 </code></pre>
 
 <p>}</p>
 
-<p>```</p>
+<p>/<em>*
+ * RollingCurl custom exception
+ </em>/
+class RollingCurlException extends Exception {}</p>
 
-<p><strong>RollingCurlGroup.php:</strong>
+<p>/<em>*
+ * Class that holds a rolling queue of curl requests.
+ *
+ * @throws RollingCurlException
+ </em>/
+class RollingCurl {</p>
+
+<pre><code>/**
+ * @var int
+ *
+ * Window size is the max number of simultaneous connections allowed.
+</code></pre>
+
+<ul>
+<li><ul>
+<li>REMEMBER TO RESPECT THE SERVERS:</li>
+<li>Sending too many requests at one time can easily be perceived</li>
+<li>as a DOS attack. Increase this window_size if you are making requests</li>
+<li>to multiple servers or have permission from the receving server admins.
+*/
+private $window_size = 5;</li>
+</ul>
+
+
+<p>/**</p>
+
+<ul>
+<li>@var float
+*</li>
+<li>Timeout is the timeout used for curl_multi_select.
+*/
+private $timeout = 10;</li>
+</ul>
+
+
+<p>/**</p>
+
+<ul>
+<li>@var string|array
+*</li>
+<li>Callback function to be applied to each result.
+*/
+private $callback;</li>
+</ul>
+
+
+<p>/**</p>
+
+<ul>
+<li>@var array
+*</li>
+<li>Set your base options that you want to be used with EVERY request.
+*/
+protected $options = array(
+CURLOPT_SSL_VERIFYPEER => 0,
+ CURLOPT_RETURNTRANSFER => 1,
+ CURLOPT_CONNECTTIMEOUT => 30,
+ CURLOPT_TIMEOUT => 30
+);</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @var array
+*/
+private $headers = array();</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @var Request[]
+*</li>
+<li> The request queue
+*/
+private $requests = array();</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @var RequestMap[]
+*</li>
+<li> Maps handles to request indexes
+*/
+private $requestMap = array();</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @var returns[]
+*</li>
+<li> All returns of requests
+*/
+private $returns = array();</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @param  $callback</li>
+<li> Callback function to be applied to each result.
+*</li>
+<li> Can be specified as &lsquo;my_callback_function&rsquo;</li>
+<li> or array($object, &lsquo;my_callback_method&rsquo;).
+*</li>
+<li> Function should take three parameters: $response, $info, $request.</li>
+<li> $response is response body, $info is additional curl info.</li>
+<li> $request is the original request
+*</li>
+<li> @return void
+*/
+function __construct($callback = null) {
+  $this->callback = $callback;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @param string $name</li>
+<li> @return mixed
+*/
+public function __get($name) {
+  return (isset($this->{$name})) ? $this->{$name} : null;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @param string $name</li>
+<li> @param mixed $value</li>
+<li> @return bool
+*/
+public function __set($name, $value){
+  // append the base options &amp; headers
+  if ($name == &ldquo;options&rdquo; || $name == &ldquo;headers&rdquo;) {
+      $this->{$name} = $value + $this->{$name};
+  } else {
+      $this->{$name} = $value;
+  }
+  return true;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Add a request to the request queue
+*</li>
+<li> @param Request $request</li>
+<li> @return bool
+*/
+public function add($request) {
+   $this->requests[] = $request;
+   return true;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @param \returns[] $returns
+*/
+public function setReturns($returns)
+{
+  $this->returns = $returns;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @return \returns[]
+*/
+public function getReturns()
+{
+  return $this->returns;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Create new Request and add it to the request queue
+*</li>
+<li> @param string $url</li>
+<li> @param string $method</li>
+<li> @param  $post_data</li>
+<li> @param  $headers</li>
+<li> @param  $options</li>
+<li> @return bool
+*/
+public function request($url, $method = &ldquo;GET&rdquo;, $post_data = null, $headers = null, $options = null) {
+   $this->requests[] = new RollingCurlRequest($url, $method, $post_data, $headers, $options);
+   return true;
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Perform GET request
+*</li>
+<li> @param string $url</li>
+<li> @param  $headers</li>
+<li> @param  $options</li>
+<li> @return bool
+*/
+public function get($url, $headers = null, $options = null) {
+  return $this->request($url, &ldquo;GET&rdquo;, null, $headers, $options);
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Perform POST request
+*</li>
+<li> @param string $url</li>
+<li> @param  $post_data</li>
+<li> @param  $headers</li>
+<li> @param  $options</li>
+<li> @return bool
+*/
+public function post($url, $post_data = null, $headers = null, $options = null) {
+  return $this->request($url, &ldquo;POST&rdquo;, $post_data, $headers, $options);
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Execute the curl
+*</li>
+<li> @param int $window_size Max number of simultaneous connections</li>
+<li> @return string|bool
+*/
+public function execute($window_size = null) {
+  // rolling curl window must always be greater than 1
+  if (sizeof($this->requests) == 1) {
+      return $this->single_curl();
+  } else {
+      // start the rolling curl. window_size is the max number of simultaneous connections
+      return $this->rolling_curl($window_size);
+  }
+}</li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Performs a single curl request
+*</li>
+<li> @access private</li>
+<li><p> @return string
+*/
+private function single_curl() {
+  $ch = curl_init();    <br/>
+  $request = array_shift($this->requests);
+  $options = $this->get_options($request);
+  curl_setopt_array($ch,$options);
+  $output = curl_exec($ch);
+  $info = curl_getinfo($ch);</p>
+
+<p>  // it&rsquo;s not neccesary to set a callback for one-off requests
+  if ($this->callback) {
+      $callback = $this->callback;
+      if (is_callable($this->callback)){
+          call_user_func($callback, $output, $info, $request);
+      }
+  }
+else
+      return $output;
+return true;
+}</p></li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Performs multiple curl requests
+*</li>
+<li> @access private</li>
+<li> @throws RollingCurlException</li>
+<li> @param int $window_size Max number of simultaneous connections</li>
+<li><p> @return bool
+*/
+private function rolling_curl($window_size = null) {
+  if ($window_size)
+      $this->window_size = $window_size;</p>
+
+<p>  // make sure the rolling window isn&rsquo;t greater than the # of urls
+  if (sizeof($this->requests) &lt; $this->window_size)
+      $this->window_size = sizeof($this->requests);</p>
+
+<p>  if ($this->window_size &lt; 2) {
+      throw new RollingCurlException(&ldquo;Window size must be greater than 1&rdquo;);
+  }</p>
+
+<p>  $master = curl_multi_init();</p>
+
+<p>  // start the first batch of requests
+  for ($i = 0; $i &lt; $this->window_size; $i++) {
+      $ch = curl_init();</p>
+
+<pre><code>  $options = $this-&gt;get_options($this-&gt;requests[$i]);
+
+  curl_setopt_array($ch,$options);
+  curl_multi_add_handle($master, $ch);
+
+  // Add to our request Maps
+  $key = (string) $ch;
+  $this-&gt;requestMap[$key] = $i;
+</code></pre>
+
+<p>  }</p>
+
+<p>  do {
+      while(($execrun = curl_multi_exec($master, $running)) == CURLM_CALL_MULTI_PERFORM);
+      if($execrun != CURLM_OK) {
+          break;
+      }
+      // a request was just completed &mdash; find out which one
+      while($done = curl_multi_info_read($master)) {</p>
+
+<pre><code>      // get the info and content returned on the request
+      $info = curl_getinfo($done['handle']);
+      $output = curl_multi_getcontent($done['handle']);
+
+      array_push($this-&gt;returns, array(
+          'return'    =&gt;  $output,
+          'info'      =&gt;  $info,
+      ));
+
+      // send the return values to the callback function.
+      $callback = $this-&gt;callback;
+      if (is_callable($callback)){
+    $key = (string)$done['handle'];
+          $request = $this-&gt;requests[$this-&gt;requestMap[$key]];
+          unset($this-&gt;requestMap[$key]);
+          call_user_func($callback, $output, $info, $request);
+      }
+
+      // start a new request (it's important to do this before removing the old one)
+      if ($i &lt; sizeof($this-&gt;requests) &amp;&amp; isset($this-&gt;requests[$i]) &amp;&amp; $i &lt; count($this-&gt;requests)) {
+          $ch = curl_init();
+          $options = $this-&gt;get_options($this-&gt;requests[$i]);
+          curl_setopt_array($ch,$options);
+          curl_multi_add_handle($master, $ch);
+
+          // Add to our request Maps
+          $key = (string) $ch;
+          $this-&gt;requestMap[$key] = $i;
+          $i++;
+      }
+
+      // remove the curl handle that just completed
+      curl_multi_remove_handle($master, $done['handle']);
+
+  }
+
+  // Block for data in / output; error handling is done by curl_multi_exec
+  if ($running) {
+      curl_multi_select($master, $this-&gt;timeout);
+  }
+</code></pre>
+
+<p>  } while ($running);
+  curl_multi_close($master);
+  return true;
+}</p></li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> Helper function to set up a new request by setting the appropriate options
+*</li>
+<li> @access private</li>
+<li> @param Request $request</li>
+<li><p> @return array
+*/
+private function get_options($request) {
+  // options for this entire curl object
+  $options = $this-><strong>get(&lsquo;options&rsquo;);
+  // NOTE: The PHP cURL library won&rsquo;t follow redirects if either safe_mode is on
+  // or open_basedir is defined.
+  // See: <a href="https://bugs.php.net/bug.php?id=30609">https://bugs.php.net/bug.php?id=30609</a>
+if (( ini_get(&lsquo;safe_mode&rsquo;) == &lsquo;Off&rsquo; || !ini_get(&lsquo;safe_mode&rsquo;) )
+      &amp;&amp; ini_get(&lsquo;open_basedir&rsquo;) == &lsquo;&rsquo;) {
+      $options[CURLOPT_FOLLOWLOCATION] = 1;
+    $options[CURLOPT_MAXREDIRS] = 5;
+  }
+  $headers = $this-></strong>get(&lsquo;headers&rsquo;);</p>
+
+<p>// append custom options for this specific request
+if ($request->options) {
+      $options = $request->options + $options;
+  }</p>
+
+<p>// set the request URL
+  $options[CURLOPT_URL] = $request->url;</p>
+
+<p>  // posting data w/ this request?
+  if ($request->post_data) {
+      $options[CURLOPT_POST] = 1;
+      $options[CURLOPT_POSTFIELDS] = $request->post_data;
+  }
+  if ($headers) {
+      $options[CURLOPT_HEADER] = 0;
+      $options[CURLOPT_HTTPHEADER] = $headers;
+  }</p>
+
+<p>  // Due to a bug in cURL CURLOPT_WRITEFUNCTION must be defined as the last option
+  // Otherwise it doesn&rsquo;t register. So let&rsquo;s unset and set it again
+  // See <a href="http://stackoverflow.com/questions/15937055/curl-writefunction-not-being-called">http://stackoverflow.com/questions/15937055/curl-writefunction-not-being-called</a>
+  if( ! empty( $options[CURLOPT_WRITEFUNCTION]) ) {
+      $writeCallback = $options[CURLOPT_WRITEFUNCTION];
+      unset( $options[CURLOPT_WRITEFUNCTION] );
+      $options[CURLOPT_WRITEFUNCTION] = $writeCallback;
+  }</p>
+
+<p>  return $options;
+}</p></li>
+</ul>
+
+
+<p>  /**</p>
+
+<ul>
+<li> @return void
+*/
+public function __destruct() {
+  unset($this->window_size, $this->callback, $this->options, $this->headers, $this->requests);
+}
+}
+```</li>
+</ul>
+</li>
+</ul>
+
+
+<p><strong><em>RollingCurlGroup.php</em></strong>:
 ```php
 /*</p>
 
@@ -854,39 +1452,46 @@ public function __destruct() {
 {</p>
 
 <pre><code>    private $group = null;
+</code></pre>
 
-/**
- * Set group for this request
- *
- * @param group The group to be set
- */
-    function setGroup($group)
+<p>  /<em>*
+  * Set group for this request
+  *
+  * @param group The group to be set
+  </em>/</p>
+
+<pre><code>    function setGroup($group)
     {
             if (!($group instanceof RollingCurlGroup))
                     throw new RollingCurlGroupException("setGroup: group needs to be of instance RollingCurlGroup");
 
             $this-&gt;group = $group;
     }
+</code></pre>
 
-/**
- * Process the request
- *
- *
- */
-    function process($output, $info)
+<p>  /<em>*
+  * Process the request
+  *
+  *
+  </em>/</p>
+
+<pre><code>    function process($output, $info)
     {
             if ($this-&gt;group)
                     $this-&gt;group-&gt;process($output, $info, $this);
     }
-
-/**
- * @return void
- */
-public function __destruct() {
-    unset($this-&gt;group);
-    parent::__destruct();
-}
 </code></pre>
+
+<p>  /<em>*
+  * @return void
+  </em>/
+  public function __destruct() {</p>
+
+<pre><code>  unset($this-&gt;group);
+  parent::__destruct();
+</code></pre>
+
+<p>  }</p>
 
 <p>}</p>
 
@@ -902,16 +1507,19 @@ public function __destruct() {
     {
             $this-&gt;name = $name;
     }
+</code></pre>
 
-/**
- * @return void
- */
-public function __destruct() {
-    unset($this-&gt;name, $this-&gt;num_requests, $this-&gt;finished_requests, $this-&gt;requests);
-}
+<p>  /<em>*
+  * @return void
+  </em>/
+  public function __destruct() {</p>
 
+<pre><code>  unset($this-&gt;name, $this-&gt;num_requests, $this-&gt;finished_requests, $this-&gt;requests);
+</code></pre>
 
-    function add($request)
+<p>  }</p>
+
+<pre><code>    function add($request)
     {
             if ($request instanceof RollingCurlGroupRequest)
             {
@@ -919,32 +1527,32 @@ public function __destruct() {
                     $this-&gt;num_requests++;
                     $this-&gt;requests[] = $request;
             }
-    else if (is_array($request))
+  else if (is_array($request))
             {
-        foreach ($request as $req)
-            $this-&gt;add($req);
-    }
+      foreach ($request as $req)
+          $this-&gt;add($req);
+  }
             else
                     throw new RollingCurlGroupException("add: Request needs to be of instance RollingCurlGroupRequest");
 
-    return true;
+  return true;
     }
 
     function addToRC($rc)
     {
-    $ret = true;
+  $ret = true;
 
             if (!($rc instanceof RollingCurl))
                     throw new RollingCurlGroupException("addToRC: RC needs to be of instance RollingCurl");
 
             while (count($this-&gt;requests) &gt; 0)
-    {
-        $ret1 = $rc-&gt;add(array_shift($this-&gt;requests));
-        if (!$ret1)
-            $ret = false;
-    }
+  {
+      $ret1 = $rc-&gt;add(array_shift($this-&gt;requests));
+      if (!$ret1)
+          $ret = false;
+  }
 
-    return $ret;
+  return $ret;
     }
 
     function process($output, $info, $request)
@@ -964,50 +1572,59 @@ public function __destruct() {
 
 <p>class GroupRollingCurl extends RollingCurl {</p>
 
-<pre><code>private $group_callback = null;
+<p>  private $group_callback = null;</p>
 
-protected function process($output, $info, $request)
-{
-    if( $request instanceof RollingCurlGroupRequest)
-        $request-&gt;process($output, $info);
+<p>  protected function process($output, $info, $request)
+  {</p>
 
-    if (is_callable($this-&gt;group_callback))
-        call_user_func($this-&gt;group_callback, $output, $info, $request);
-}
+<pre><code>  if( $request instanceof RollingCurlGroupRequest)
+      $request-&gt;process($output, $info);
 
-function __construct($callback = null)
-{
-    $this-&gt;group_callback = $callback;
-
-    parent::__construct(array(&amp;$this, "process"));
-}
-
-public function add($request) 
-{
-    if ($request instanceof RollingCurlGroup)
-        return $request-&gt;addToRC($this);
-    else
-        return parent::add($request);
-}
-
-public function execute($window_size = null) {
-
-    if (count($this-&gt;requests) == 0)
-        return false;
-
-    return parent::execute($window_size);
-}
+  if (is_callable($this-&gt;group_callback))
+      call_user_func($this-&gt;group_callback, $output, $info, $request);
 </code></pre>
 
-<p>}</p>
+<p>  }</p>
 
-<p>```</p>
+<p>  function __construct($callback = null)
+  {</p>
+
+<pre><code>  $this-&gt;group_callback = $callback;
+
+  parent::__construct(array(&amp;$this, "process"));
+</code></pre>
+
+<p>  }</p>
+
+<p>  public function add($request)
+  {</p>
+
+<pre><code>  if ($request instanceof RollingCurlGroup)
+      return $request-&gt;addToRC($this);
+  else
+      return parent::add($request);
+</code></pre>
+
+<p>  }</p>
+
+<p>  public function execute($window_size = null) {</p>
+
+<pre><code>  if (count($this-&gt;requests) == 0)
+      return false;
+
+  return parent::execute($window_size);
+</code></pre>
+
+<p>  }</p>
+
+<p>}
+```</p>
 
 <h3>Fazendo a Mágica</h3>
 
-<p>Agora que temos tudo, vamos criar uma página que faz esse processo para nós, no nosso caso, vamos transferir imagens de uma pasta para outra, mas poderiamos simplesmente chamar isso de um banco de dados, ou outro lugar.</p>
+<p>Agora que temos tudo, vamos criar uma página que faz esse processo para nós, no nosso caso, vamos transferir imagens de uma pasta para outra, mas poderíamos simplesmente chamar isso de um banco de dados, ou outro lugar.</p>
 
-<p><strong>index.php:</strong>
+<p><strong><em>index.php</em></strong>:
 ```php
 require_once &ldquo;class/RollingCurl.php&rdquo;;
 define (&lsquo;URLPREFIX&rsquo;, &lsquo;<a href="http://127.0.0.1/processaImagem/services/resize.php">http://127.0.0.1/processaImagem/services/resize.php</a>&rsquo;);</p>
@@ -1036,15 +1653,13 @@ if($rc->execute()){</p>
 }
 </code></pre>
 
-<p>}</p>
-
-<h2>```</h2>
+<p>}
+```</p>
 
 <h2>Notas finais</h2>
 
-<p>As vezes nos deparamos com algumas limitações técnicas ou da propria linguagem, e pra resolvermos esses problemas, precisamos pensar fora da caxa. Existem diversas formas para realizarmos esse tipo de tarefa, mas dentro de uma limitação que tive, essa foi sem dúvida a melhor solução.</p>
-
-<p>Solução no github <a href="https://github.com/gustavobeavis/serviceResize">serviceResize</a></p>
+<p>As vezes nos deparamos com algumas limitações técnicas ou da propria linguagem, e pra resolvermos esses problemas, precisamos pensar fora da caxa. Existem diversas formas para realizarmos esse tipo de tarefa, mas dentro de uma limitação que tive, essa foi sem dúvida a melhor solução.
+Solução no github <strong><a href="https://github.com/gustavobeavis/serviceResize">serviceResize</a></strong></p>
 ]]></content>
   </entry>
   

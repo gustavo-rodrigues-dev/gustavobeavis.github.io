@@ -1,0 +1,416 @@
+<div class="highlight"><pre><span class="cm">/*</span>
+<span class="cm">Authored by Josh Fraser (www.joshfraser.com)</span>
+<span class="cm">Released under Apache License 2.0</span>
+
+<span class="cm">Maintained by Alexander Makarov, http://rmcreative.ru/</span>
+
+<span class="cm">$Id$</span>
+<span class="cm">*/</span>
+
+<span class="sd">/**</span>
+<span class="sd"> * Class that represent a single curl request</span>
+<span class="sd"> */</span>
+<span class="k">class</span> <span class="nc">RollingCurlRequest</span> <span class="p">{</span>
+  <span class="k">public</span> <span class="nv">$url</span> <span class="o">=</span> <span class="k">false</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nv">$method</span> <span class="o">=</span> <span class="s1">&#39;GET&#39;</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nv">$post_data</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nv">$headers</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+  <span class="k">public</span> <span class="nv">$options</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param string $url</span>
+<span class="sd">     * @param string $method</span>
+<span class="sd">     * @param  $post_data</span>
+<span class="sd">     * @param  $headers</span>
+<span class="sd">     * @param  $options</span>
+<span class="sd">     * @return void</span>
+<span class="sd">     */</span>
+    <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$method</span> <span class="o">=</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="nv">$post_data</span> <span class="o">=</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$headers</span> <span class="o">=</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$options</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">url</span> <span class="o">=</span> <span class="nv">$url</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">method</span> <span class="o">=</span> <span class="nv">$method</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">post_data</span> <span class="o">=</span> <span class="nv">$post_data</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">headers</span> <span class="o">=</span> <span class="nv">$headers</span><span class="p">;</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">options</span> <span class="o">=</span> <span class="nv">$options</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @return void</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__destruct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">url</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">method</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">post_data</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">headers</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">options</span><span class="p">);</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="sd">/**</span>
+<span class="sd"> * RollingCurl custom exception</span>
+<span class="sd"> */</span>
+<span class="k">class</span> <span class="nc">RollingCurlException</span> <span class="k">extends</span> <span class="nx">Exception</span> <span class="p">{}</span>
+
+<span class="sd">/**</span>
+<span class="sd"> * Class that holds a rolling queue of curl requests.</span>
+<span class="sd"> *</span>
+<span class="sd"> * @throws RollingCurlException</span>
+<span class="sd"> */</span>
+<span class="k">class</span> <span class="nc">RollingCurl</span> <span class="p">{</span>
+    <span class="sd">/**</span>
+<span class="sd">     * @var int</span>
+<span class="sd">     *</span>
+<span class="sd">     * Window size is the max number of simultaneous connections allowed.</span>
+<span class="sd">  * </span>
+<span class="sd">     * REMEMBER TO RESPECT THE SERVERS:</span>
+<span class="sd">     * Sending too many requests at one time can easily be perceived</span>
+<span class="sd">     * as a DOS attack. Increase this window_size if you are making requests</span>
+<span class="sd">     * to multiple servers or have permission from the receving server admins.</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="nv">$window_size</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @var float</span>
+<span class="sd">     *</span>
+<span class="sd">     * Timeout is the timeout used for curl_multi_select.</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="nv">$timeout</span> <span class="o">=</span> <span class="mi">10</span><span class="p">;</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @var string|array</span>
+<span class="sd">     *</span>
+<span class="sd">     * Callback function to be applied to each result.</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="nv">$callback</span><span class="p">;</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @var array</span>
+<span class="sd">     *</span>
+<span class="sd">     * Set your base options that you want to be used with EVERY request.</span>
+<span class="sd">     */</span>
+    <span class="k">protected</span> <span class="nv">$options</span> <span class="o">=</span> <span class="k">array</span><span class="p">(</span>
+      <span class="nx">CURLOPT_SSL_VERIFYPEER</span> <span class="o">=&gt;</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="nx">CURLOPT_RETURNTRANSFER</span> <span class="o">=&gt;</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="nx">CURLOPT_CONNECTTIMEOUT</span> <span class="o">=&gt;</span> <span class="mi">30</span><span class="p">,</span>
+        <span class="nx">CURLOPT_TIMEOUT</span> <span class="o">=&gt;</span> <span class="mi">30</span>
+  <span class="p">);</span>
+  
+    <span class="sd">/**</span>
+<span class="sd">     * @var array</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="nv">$headers</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @var Request[]</span>
+<span class="sd">     *</span>
+<span class="sd">     * The request queue</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="nv">$requests</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @var RequestMap[]</span>
+<span class="sd">     *</span>
+<span class="sd">     * Maps handles to request indexes</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="nv">$requestMap</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @var returns[]</span>
+<span class="sd">     *</span>
+<span class="sd">     * All returns of requests</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="nv">$returns</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param  $callback</span>
+<span class="sd">     * Callback function to be applied to each result.</span>
+<span class="sd">     *</span>
+<span class="sd">     * Can be specified as &#39;my_callback_function&#39;</span>
+<span class="sd">     * or array($object, &#39;my_callback_method&#39;).</span>
+<span class="sd">     *</span>
+<span class="sd">     * Function should take three parameters: $response, $info, $request.</span>
+<span class="sd">     * $response is response body, $info is additional curl info.</span>
+<span class="sd">     * $request is the original request</span>
+<span class="sd">     *</span>
+<span class="sd">     * @return void</span>
+<span class="sd">     */</span>
+  <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$callback</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback</span> <span class="o">=</span> <span class="nv">$callback</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param string $name</span>
+<span class="sd">     * @return mixed</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__get</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="p">{</span><span class="nv">$name</span><span class="p">}))</span> <span class="o">?</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="p">{</span><span class="nv">$name</span><span class="p">}</span> <span class="o">:</span> <span class="k">null</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param string $name</span>
+<span class="sd">     * @param mixed $value</span>
+<span class="sd">     * @return bool</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__set</span><span class="p">(</span><span class="nv">$name</span><span class="p">,</span> <span class="nv">$value</span><span class="p">){</span>
+        <span class="c1">// append the base options &amp; headers</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$name</span> <span class="o">==</span> <span class="s2">&quot;options&quot;</span> <span class="o">||</span> <span class="nv">$name</span> <span class="o">==</span> <span class="s2">&quot;headers&quot;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="p">{</span><span class="nv">$name</span><span class="p">}</span> <span class="o">=</span> <span class="nv">$value</span> <span class="o">+</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="p">{</span><span class="nv">$name</span><span class="p">};</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="p">{</span><span class="nv">$name</span><span class="p">}</span> <span class="o">=</span> <span class="nv">$value</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * Add a request to the request queue</span>
+<span class="sd">     *</span>
+<span class="sd">     * @param Request $request</span>
+<span class="sd">     * @return bool</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">add</span><span class="p">(</span><span class="nv">$request</span><span class="p">)</span> <span class="p">{</span>
+         <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$request</span><span class="p">;</span>
+         <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @param \returns[] $returns</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">setReturns</span><span class="p">(</span><span class="nv">$returns</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">returns</span> <span class="o">=</span> <span class="nv">$returns</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @return \returns[]</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">getReturns</span><span class="p">()</span>
+    <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">returns</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * Create new Request and add it to the request queue</span>
+<span class="sd">     *</span>
+<span class="sd">     * @param string $url</span>
+<span class="sd">     * @param string $method</span>
+<span class="sd">     * @param  $post_data</span>
+<span class="sd">     * @param  $headers</span>
+<span class="sd">     * @param  $options</span>
+<span class="sd">     * @return bool</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">request</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$method</span> <span class="o">=</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="nv">$post_data</span> <span class="o">=</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$headers</span> <span class="o">=</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$options</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+         <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">[]</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">RollingCurlRequest</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$method</span><span class="p">,</span> <span class="nv">$post_data</span><span class="p">,</span> <span class="nv">$headers</span><span class="p">,</span> <span class="nv">$options</span><span class="p">);</span>
+         <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * Perform GET request</span>
+<span class="sd">     *</span>
+<span class="sd">     * @param string $url</span>
+<span class="sd">     * @param  $headers</span>
+<span class="sd">     * @param  $options</span>
+<span class="sd">     * @return bool</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">get</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$headers</span> <span class="o">=</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$options</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="s2">&quot;GET&quot;</span><span class="p">,</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$headers</span><span class="p">,</span> <span class="nv">$options</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * Perform POST request</span>
+<span class="sd">     *</span>
+<span class="sd">     * @param string $url</span>
+<span class="sd">     * @param  $post_data</span>
+<span class="sd">     * @param  $headers</span>
+<span class="sd">     * @param  $options</span>
+<span class="sd">     * @return bool</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">post</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="nv">$post_data</span> <span class="o">=</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$headers</span> <span class="o">=</span> <span class="k">null</span><span class="p">,</span> <span class="nv">$options</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">request</span><span class="p">(</span><span class="nv">$url</span><span class="p">,</span> <span class="s2">&quot;POST&quot;</span><span class="p">,</span> <span class="nv">$post_data</span><span class="p">,</span> <span class="nv">$headers</span><span class="p">,</span> <span class="nv">$options</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * Execute the curl</span>
+<span class="sd">     *</span>
+<span class="sd">     * @param int $window_size Max number of simultaneous connections</span>
+<span class="sd">     * @return string|bool</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">execute</span><span class="p">(</span><span class="nv">$window_size</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// rolling curl window must always be greater than 1</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">sizeof</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">single_curl</span><span class="p">();</span>
+        <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+            <span class="c1">// start the rolling curl. window_size is the max number of simultaneous connections</span>
+            <span class="k">return</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">rolling_curl</span><span class="p">(</span><span class="nv">$window_size</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * Performs a single curl request</span>
+<span class="sd">     *</span>
+<span class="sd">     * @access private</span>
+<span class="sd">     * @return string</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="k">function</span> <span class="nf">single_curl</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">();</span>      
+        <span class="nv">$request</span> <span class="o">=</span> <span class="nb">array_shift</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">);</span>
+        <span class="nv">$options</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get_options</span><span class="p">(</span><span class="nv">$request</span><span class="p">);</span>
+        <span class="nb">curl_setopt_array</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span><span class="nv">$options</span><span class="p">);</span>
+        <span class="nv">$output</span> <span class="o">=</span> <span class="nb">curl_exec</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+        <span class="nv">$info</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$ch</span><span class="p">);</span>
+
+        <span class="c1">// it&#39;s not neccesary to set a callback for one-off requests</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$callback</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback</span><span class="p">;</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">is_callable</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback</span><span class="p">)){</span>
+                <span class="nb">call_user_func</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">,</span> <span class="nv">$request</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+      <span class="k">else</span>
+            <span class="k">return</span> <span class="nv">$output</span><span class="p">;</span>
+  <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * Performs multiple curl requests</span>
+<span class="sd">     *</span>
+<span class="sd">     * @access private</span>
+<span class="sd">     * @throws RollingCurlException</span>
+<span class="sd">     * @param int $window_size Max number of simultaneous connections</span>
+<span class="sd">     * @return bool</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="k">function</span> <span class="nf">rolling_curl</span><span class="p">(</span><span class="nv">$window_size</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$window_size</span><span class="p">)</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window_size</span> <span class="o">=</span> <span class="nv">$window_size</span><span class="p">;</span>
+
+        <span class="c1">// make sure the rolling window isn&#39;t greater than the # of urls</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">sizeof</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window_size</span><span class="p">)</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window_size</span> <span class="o">=</span> <span class="nb">sizeof</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">);</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window_size</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">)</span> <span class="p">{</span>
+            <span class="k">throw</span> <span class="k">new</span> <span class="nx">RollingCurlException</span><span class="p">(</span><span class="s2">&quot;Window size must be greater than 1&quot;</span><span class="p">);</span>
+        <span class="p">}</span>
+
+        <span class="nv">$master</span> <span class="o">=</span> <span class="nb">curl_multi_init</span><span class="p">();</span>
+
+        <span class="c1">// start the first batch of requests</span>
+        <span class="k">for</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window_size</span><span class="p">;</span> <span class="nv">$i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">();</span>
+
+            <span class="nv">$options</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get_options</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">[</span><span class="nv">$i</span><span class="p">]);</span>
+
+            <span class="nb">curl_setopt_array</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span><span class="nv">$options</span><span class="p">);</span>
+            <span class="nb">curl_multi_add_handle</span><span class="p">(</span><span class="nv">$master</span><span class="p">,</span> <span class="nv">$ch</span><span class="p">);</span>
+
+            <span class="c1">// Add to our request Maps</span>
+            <span class="nv">$key</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span> <span class="nv">$ch</span><span class="p">;</span>
+            <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requestMap</span><span class="p">[</span><span class="nv">$key</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$i</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">do</span> <span class="p">{</span>
+            <span class="k">while</span><span class="p">((</span><span class="nv">$execrun</span> <span class="o">=</span> <span class="nb">curl_multi_exec</span><span class="p">(</span><span class="nv">$master</span><span class="p">,</span> <span class="nv">$running</span><span class="p">))</span> <span class="o">==</span> <span class="nx">CURLM_CALL_MULTI_PERFORM</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span><span class="nv">$execrun</span> <span class="o">!=</span> <span class="nx">CURLM_OK</span><span class="p">)</span> <span class="p">{</span>
+                <span class="k">break</span><span class="p">;</span>
+            <span class="p">}</span>
+            <span class="c1">// a request was just completed -- find out which one</span>
+            <span class="k">while</span><span class="p">(</span><span class="nv">$done</span> <span class="o">=</span> <span class="nb">curl_multi_info_read</span><span class="p">(</span><span class="nv">$master</span><span class="p">))</span> <span class="p">{</span>
+
+                <span class="c1">// get the info and content returned on the request</span>
+                <span class="nv">$info</span> <span class="o">=</span> <span class="nb">curl_getinfo</span><span class="p">(</span><span class="nv">$done</span><span class="p">[</span><span class="s1">&#39;handle&#39;</span><span class="p">]);</span>
+                <span class="nv">$output</span> <span class="o">=</span> <span class="nb">curl_multi_getcontent</span><span class="p">(</span><span class="nv">$done</span><span class="p">[</span><span class="s1">&#39;handle&#39;</span><span class="p">]);</span>
+
+                <span class="nb">array_push</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">returns</span><span class="p">,</span> <span class="k">array</span><span class="p">(</span>
+                    <span class="s1">&#39;return&#39;</span>    <span class="o">=&gt;</span>  <span class="nv">$output</span><span class="p">,</span>
+                    <span class="s1">&#39;info&#39;</span>      <span class="o">=&gt;</span>  <span class="nv">$info</span><span class="p">,</span>
+                <span class="p">));</span>
+
+                <span class="c1">// send the return values to the callback function.</span>
+                <span class="nv">$callback</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback</span><span class="p">;</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">is_callable</span><span class="p">(</span><span class="nv">$callback</span><span class="p">)){</span>
+              <span class="nv">$key</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span><span class="nv">$done</span><span class="p">[</span><span class="s1">&#39;handle&#39;</span><span class="p">];</span>
+                    <span class="nv">$request</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">[</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requestMap</span><span class="p">[</span><span class="nv">$key</span><span class="p">]];</span>
+                    <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requestMap</span><span class="p">[</span><span class="nv">$key</span><span class="p">]);</span>
+                    <span class="nb">call_user_func</span><span class="p">(</span><span class="nv">$callback</span><span class="p">,</span> <span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">,</span> <span class="nv">$request</span><span class="p">);</span>
+                <span class="p">}</span>
+
+                <span class="c1">// start a new request (it&#39;s important to do this before removing the old one)</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nv">$i</span> <span class="o">&lt;</span> <span class="nb">sizeof</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="nb">isset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">[</span><span class="nv">$i</span><span class="p">])</span> <span class="o">&amp;&amp;</span> <span class="nv">$i</span> <span class="o">&lt;</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">))</span> <span class="p">{</span>
+                    <span class="nv">$ch</span> <span class="o">=</span> <span class="nb">curl_init</span><span class="p">();</span>
+                    <span class="nv">$options</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">get_options</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">[</span><span class="nv">$i</span><span class="p">]);</span>
+                    <span class="nb">curl_setopt_array</span><span class="p">(</span><span class="nv">$ch</span><span class="p">,</span><span class="nv">$options</span><span class="p">);</span>
+                    <span class="nb">curl_multi_add_handle</span><span class="p">(</span><span class="nv">$master</span><span class="p">,</span> <span class="nv">$ch</span><span class="p">);</span>
+
+                    <span class="c1">// Add to our request Maps</span>
+                    <span class="nv">$key</span> <span class="o">=</span> <span class="p">(</span><span class="nx">string</span><span class="p">)</span> <span class="nv">$ch</span><span class="p">;</span>
+                    <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requestMap</span><span class="p">[</span><span class="nv">$key</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$i</span><span class="p">;</span>
+                    <span class="nv">$i</span><span class="o">++</span><span class="p">;</span>
+                <span class="p">}</span>
+
+                <span class="c1">// remove the curl handle that just completed</span>
+                <span class="nb">curl_multi_remove_handle</span><span class="p">(</span><span class="nv">$master</span><span class="p">,</span> <span class="nv">$done</span><span class="p">[</span><span class="s1">&#39;handle&#39;</span><span class="p">]);</span>
+
+            <span class="p">}</span>
+
+            <span class="c1">// Block for data in / output; error handling is done by curl_multi_exec</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nv">$running</span><span class="p">)</span> <span class="p">{</span>
+                <span class="nb">curl_multi_select</span><span class="p">(</span><span class="nv">$master</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">timeout</span><span class="p">);</span>
+            <span class="p">}</span>
+
+        <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="nv">$running</span><span class="p">);</span>
+        <span class="nb">curl_multi_close</span><span class="p">(</span><span class="nv">$master</span><span class="p">);</span>
+        <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+    <span class="p">}</span>
+
+
+    <span class="sd">/**</span>
+<span class="sd">     * Helper function to set up a new request by setting the appropriate options</span>
+<span class="sd">     *</span>
+<span class="sd">     * @access private</span>
+<span class="sd">     * @param Request $request</span>
+<span class="sd">     * @return array</span>
+<span class="sd">     */</span>
+    <span class="k">private</span> <span class="k">function</span> <span class="nf">get_options</span><span class="p">(</span><span class="nv">$request</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// options for this entire curl object</span>
+        <span class="nv">$options</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">__get</span><span class="p">(</span><span class="s1">&#39;options&#39;</span><span class="p">);</span>
+        <span class="c1">// NOTE: The PHP cURL library won&#39;t follow redirects if either safe_mode is on</span>
+        <span class="c1">// or open_basedir is defined.</span>
+        <span class="c1">// See: https://bugs.php.net/bug.php?id=30609</span>
+      <span class="k">if</span> <span class="p">((</span> <span class="nb">ini_get</span><span class="p">(</span><span class="s1">&#39;safe_mode&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;Off&#39;</span> <span class="o">||</span> <span class="o">!</span><span class="nb">ini_get</span><span class="p">(</span><span class="s1">&#39;safe_mode&#39;</span><span class="p">)</span> <span class="p">)</span>
+            <span class="o">&amp;&amp;</span> <span class="nb">ini_get</span><span class="p">(</span><span class="s1">&#39;open_basedir&#39;</span><span class="p">)</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_FOLLOWLOCATION</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+          <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_MAXREDIRS</span><span class="p">]</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="nv">$headers</span> <span class="o">=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">__get</span><span class="p">(</span><span class="s1">&#39;headers&#39;</span><span class="p">);</span>
+
+      <span class="c1">// append custom options for this specific request</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nv">$request</span><span class="o">-&gt;</span><span class="na">options</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$options</span> <span class="o">=</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="na">options</span> <span class="o">+</span> <span class="nv">$options</span><span class="p">;</span>
+        <span class="p">}</span>
+
+      <span class="c1">// set the request URL</span>
+        <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_URL</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="na">url</span><span class="p">;</span>
+
+        <span class="c1">// posting data w/ this request?</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$request</span><span class="o">-&gt;</span><span class="na">post_data</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_POST</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+            <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_POSTFIELDS</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="na">post_data</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nv">$headers</span><span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_HEADER</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+            <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_HTTPHEADER</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$headers</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="c1">// Due to a bug in cURL CURLOPT_WRITEFUNCTION must be defined as the last option</span>
+        <span class="c1">// Otherwise it doesn&#39;t register. So let&#39;s unset and set it again</span>
+        <span class="c1">// See http://stackoverflow.com/questions/15937055/curl-writefunction-not-being-called</span>
+        <span class="k">if</span><span class="p">(</span> <span class="o">!</span> <span class="k">empty</span><span class="p">(</span> <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_WRITEFUNCTION</span><span class="p">])</span> <span class="p">)</span> <span class="p">{</span>
+            <span class="nv">$writeCallback</span> <span class="o">=</span> <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_WRITEFUNCTION</span><span class="p">];</span>
+            <span class="nb">unset</span><span class="p">(</span> <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_WRITEFUNCTION</span><span class="p">]</span> <span class="p">);</span>
+            <span class="nv">$options</span><span class="p">[</span><span class="nx">CURLOPT_WRITEFUNCTION</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$writeCallback</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nv">$options</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="sd">/**</span>
+<span class="sd">     * @return void</span>
+<span class="sd">     */</span>
+    <span class="k">public</span> <span class="k">function</span> <span class="nf">__destruct</span><span class="p">()</span> <span class="p">{</span>
+        <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">window_size</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">callback</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">options</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">headers</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>

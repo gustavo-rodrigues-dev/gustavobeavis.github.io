@@ -1,0 +1,11 @@
+<div class="highlight"><pre><span class="c1">// Origem</span>
+<span class="nv">$origin</span> <span class="o">=</span> <span class="nb">scandir</span><span class="p">(</span><span class="s1">&#39;image/origin&#39;</span><span class="p">);</span>
+<span class="nv">$origin</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$origin</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="nb">count</span><span class="p">(</span><span class="nv">$origin</span><span class="p">));</span>
+
+<span class="c1">//destino</span>
+<span class="nv">$destination</span> <span class="o">=</span> <span class="nb">scandir</span><span class="p">(</span><span class="s1">&#39;image/destination&#39;</span><span class="p">);</span>
+<span class="nv">$destination</span> <span class="o">=</span> <span class="nb">array_slice</span><span class="p">(</span><span class="nv">$destination</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="nb">count</span><span class="p">(</span><span class="nv">$destination</span><span class="p">));</span>
+
+<span class="c1">//Imagens a serem geradas</span>
+<span class="nv">$terms_list</span> <span class="o">=</span> <span class="nb">array_diff</span><span class="p">(</span><span class="nv">$origin</span><span class="p">,</span> <span class="nv">$destination</span><span class="p">);</span>
+</pre></div>

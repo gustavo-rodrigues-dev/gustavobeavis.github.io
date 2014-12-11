@@ -1,0 +1,15 @@
+<div class="highlight"><pre><span class="k">public</span> <span class="k">function</span> <span class="nf">onMessage</span><span class="p">(</span><span class="nx">ConnectionInterface</span> <span class="nv">$from</span><span class="p">,</span> <span class="nv">$msg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="nv">$numRecv</span> <span class="o">=</span> <span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">clients</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">echo</span> <span class="nb">sprintf</span><span class="p">(</span><span class="s1">&#39;Connection %d sending message &quot;%s&quot; to %d other connection%s&#39;</span> <span class="o">.</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="p">,</span> <span class="nv">$from</span><span class="o">-&gt;</span><span class="na">resourceId</span><span class="p">,</span> <span class="nv">$msg</span><span class="p">,</span> <span class="nv">$numRecv</span><span class="p">,</span> <span class="nv">$numRecv</span> <span class="o">==</span> <span class="mi">1</span> <span class="o">?</span> <span class="s1">&#39;&#39;</span> <span class="o">:</span> <span class="s1">&#39;s&#39;</span><span class="p">);</span>
+    <span class="nv">$dados</span> <span class="o">=</span> <span class="nb">json_decode</span><span class="p">(</span><span class="nv">$msg</span><span class="p">,</span> <span class="k">true</span><span class="p">);</span>
+    <span class="nv">$dados</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nv">$from</span><span class="o">-&gt;</span><span class="na">resourceId</span><span class="p">;</span>
+
+    <span class="k">foreach</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">clients</span> <span class="k">as</span> <span class="nv">$client</span><span class="p">)</span> <span class="p">{</span>
+
+            <span class="c1">// The sender is not the receiver, send to each client connected</span>
+            <span class="nv">$client</span><span class="o">-&gt;</span><span class="na">send</span><span class="p">(</span><span class="nb">json_encode</span><span class="p">(</span><span class="nv">$dados</span><span class="p">));</span>
+
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>

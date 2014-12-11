@@ -1,0 +1,156 @@
+<div class="highlight"><pre><span class="cm">/*</span>
+
+<span class="cm">  Authored by Fabian Franz (www.lionsad.de)</span>
+<span class="cm">  Released under Apache License 2.0</span>
+
+<span class="cm">$Id$</span>
+<span class="cm">*/</span>
+
+<span class="k">class</span> <span class="nc">RollingCurlGroupException</span> <span class="k">extends</span> <span class="nx">Exception</span> <span class="p">{}</span>
+
+<span class="k">abstract</span> <span class="k">class</span> <span class="nc">RollingCurlGroupRequest</span> <span class="k">extends</span> <span class="nx">RollingCurlRequest</span>
+<span class="p">{</span>
+        <span class="k">private</span> <span class="nv">$group</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+
+  <span class="sd">/**</span>
+<span class="sd">  * Set group for this request</span>
+<span class="sd">  *</span>
+<span class="sd">  * @param group The group to be set</span>
+<span class="sd">  */</span>
+        <span class="k">function</span> <span class="nf">setGroup</span><span class="p">(</span><span class="nv">$group</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="nv">$group</span> <span class="nx">instanceof</span> <span class="nx">RollingCurlGroup</span><span class="p">))</span>
+                        <span class="k">throw</span> <span class="k">new</span> <span class="nx">RollingCurlGroupException</span><span class="p">(</span><span class="s2">&quot;setGroup: group needs to be of instance RollingCurlGroup&quot;</span><span class="p">);</span>
+
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">group</span> <span class="o">=</span> <span class="nv">$group</span><span class="p">;</span>
+        <span class="p">}</span>
+
+  <span class="sd">/**</span>
+<span class="sd">  * Process the request</span>
+<span class="sd">  *</span>
+<span class="sd">  *</span>
+<span class="sd">  */</span>
+        <span class="k">function</span> <span class="nf">process</span><span class="p">(</span><span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">group</span><span class="p">)</span>
+                        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">group</span><span class="o">-&gt;</span><span class="na">process</span><span class="p">(</span><span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">,</span> <span class="nv">$this</span><span class="p">);</span>
+        <span class="p">}</span>
+
+  <span class="sd">/**</span>
+<span class="sd">  * @return void</span>
+<span class="sd">  */</span>
+  <span class="k">public</span> <span class="k">function</span> <span class="nf">__destruct</span><span class="p">()</span> <span class="p">{</span>
+      <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">group</span><span class="p">);</span>
+      <span class="k">parent</span><span class="o">::</span><span class="na">__destruct</span><span class="p">();</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">RollingCurlGroup</span>
+<span class="p">{</span>
+        <span class="k">protected</span> <span class="nv">$name</span><span class="p">;</span>
+        <span class="k">protected</span> <span class="nv">$num_requests</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">protected</span> <span class="nv">$finished_requests</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+        <span class="k">private</span> <span class="nv">$requests</span> <span class="o">=</span> <span class="k">array</span><span class="p">();</span>
+
+        <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$name</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span> <span class="o">=</span> <span class="nv">$name</span><span class="p">;</span>
+        <span class="p">}</span>
+
+  <span class="sd">/**</span>
+<span class="sd">  * @return void</span>
+<span class="sd">  */</span>
+  <span class="k">public</span> <span class="k">function</span> <span class="nf">__destruct</span><span class="p">()</span> <span class="p">{</span>
+      <span class="nb">unset</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">name</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">num_requests</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">finished_requests</span><span class="p">,</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">);</span>
+  <span class="p">}</span>
+
+
+        <span class="k">function</span> <span class="nf">add</span><span class="p">(</span><span class="nv">$request</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nv">$request</span> <span class="nx">instanceof</span> <span class="nx">RollingCurlGroupRequest</span><span class="p">)</span>
+                <span class="p">{</span>
+                        <span class="nv">$request</span><span class="o">-&gt;</span><span class="na">setGroup</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
+                        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">num_requests</span><span class="o">++</span><span class="p">;</span>
+                        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">[]</span> <span class="o">=</span> <span class="nv">$request</span><span class="p">;</span>
+                <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="nb">is_array</span><span class="p">(</span><span class="nv">$request</span><span class="p">))</span>
+                <span class="p">{</span>
+          <span class="k">foreach</span> <span class="p">(</span><span class="nv">$request</span> <span class="k">as</span> <span class="nv">$req</span><span class="p">)</span>
+              <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nv">$req</span><span class="p">);</span>
+      <span class="p">}</span>
+                <span class="k">else</span>
+                        <span class="k">throw</span> <span class="k">new</span> <span class="nx">RollingCurlGroupException</span><span class="p">(</span><span class="s2">&quot;add: Request needs to be of instance RollingCurlGroupRequest&quot;</span><span class="p">);</span>
+
+      <span class="k">return</span> <span class="k">true</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">function</span> <span class="nf">addToRC</span><span class="p">(</span><span class="nv">$rc</span><span class="p">)</span>
+        <span class="p">{</span>
+      <span class="nv">$ret</span> <span class="o">=</span> <span class="k">true</span><span class="p">;</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="p">(</span><span class="nv">$rc</span> <span class="nx">instanceof</span> <span class="nx">RollingCurl</span><span class="p">))</span>
+                        <span class="k">throw</span> <span class="k">new</span> <span class="nx">RollingCurlGroupException</span><span class="p">(</span><span class="s2">&quot;addToRC: RC needs to be of instance RollingCurl&quot;</span><span class="p">);</span>
+
+                <span class="k">while</span> <span class="p">(</span><span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="p">{</span>
+          <span class="nv">$ret1</span> <span class="o">=</span> <span class="nv">$rc</span><span class="o">-&gt;</span><span class="na">add</span><span class="p">(</span><span class="nb">array_shift</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">));</span>
+          <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="nv">$ret1</span><span class="p">)</span>
+              <span class="nv">$ret</span> <span class="o">=</span> <span class="k">false</span><span class="p">;</span>
+      <span class="p">}</span>
+
+      <span class="k">return</span> <span class="nv">$ret</span><span class="p">;</span>
+        <span class="p">}</span>
+
+        <span class="k">function</span> <span class="nf">process</span><span class="p">(</span><span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">,</span> <span class="nv">$request</span><span class="p">)</span>
+        <span class="p">{</span>
+                <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">finished_requests</span><span class="o">++</span><span class="p">;</span>
+
+                <span class="k">if</span> <span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">finished_requests</span> <span class="o">&gt;=</span> <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">num_requests</span><span class="p">)</span>
+                        <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">finished</span><span class="p">();</span>
+        <span class="p">}</span>
+
+        <span class="k">function</span> <span class="nf">finished</span><span class="p">()</span>
+        <span class="p">{</span>
+        <span class="p">}</span>
+
+<span class="p">}</span>
+
+<span class="k">class</span> <span class="nc">GroupRollingCurl</span> <span class="k">extends</span> <span class="nx">RollingCurl</span> <span class="p">{</span>
+
+  <span class="k">private</span> <span class="nv">$group_callback</span> <span class="o">=</span> <span class="k">null</span><span class="p">;</span>
+
+  <span class="k">protected</span> <span class="k">function</span> <span class="nf">process</span><span class="p">(</span><span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">,</span> <span class="nv">$request</span><span class="p">)</span>
+  <span class="p">{</span>
+      <span class="k">if</span><span class="p">(</span> <span class="nv">$request</span> <span class="nx">instanceof</span> <span class="nx">RollingCurlGroupRequest</span><span class="p">)</span>
+          <span class="nv">$request</span><span class="o">-&gt;</span><span class="na">process</span><span class="p">(</span><span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">);</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="nb">is_callable</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">group_callback</span><span class="p">))</span>
+          <span class="nb">call_user_func</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">group_callback</span><span class="p">,</span> <span class="nv">$output</span><span class="p">,</span> <span class="nv">$info</span><span class="p">,</span> <span class="nv">$request</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">function</span> <span class="nf">__construct</span><span class="p">(</span><span class="nv">$callback</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span>
+  <span class="p">{</span>
+      <span class="nv">$this</span><span class="o">-&gt;</span><span class="na">group_callback</span> <span class="o">=</span> <span class="nv">$callback</span><span class="p">;</span>
+
+      <span class="k">parent</span><span class="o">::</span><span class="na">__construct</span><span class="p">(</span><span class="k">array</span><span class="p">(</span><span class="o">&amp;</span><span class="nv">$this</span><span class="p">,</span> <span class="s2">&quot;process&quot;</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="k">function</span> <span class="nf">add</span><span class="p">(</span><span class="nv">$request</span><span class="p">)</span>
+  <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="nv">$request</span> <span class="nx">instanceof</span> <span class="nx">RollingCurlGroup</span><span class="p">)</span>
+          <span class="k">return</span> <span class="nv">$request</span><span class="o">-&gt;</span><span class="na">addToRC</span><span class="p">(</span><span class="nv">$this</span><span class="p">);</span>
+      <span class="k">else</span>
+          <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">add</span><span class="p">(</span><span class="nv">$request</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">public</span> <span class="k">function</span> <span class="nf">execute</span><span class="p">(</span><span class="nv">$window_size</span> <span class="o">=</span> <span class="k">null</span><span class="p">)</span> <span class="p">{</span>
+
+      <span class="k">if</span> <span class="p">(</span><span class="nb">count</span><span class="p">(</span><span class="nv">$this</span><span class="o">-&gt;</span><span class="na">requests</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+          <span class="k">return</span> <span class="k">false</span><span class="p">;</span>
+
+      <span class="k">return</span> <span class="k">parent</span><span class="o">::</span><span class="na">execute</span><span class="p">(</span><span class="nv">$window_size</span><span class="p">);</span>
+  <span class="p">}</span>
+
+<span class="p">}</span>
+</pre></div>

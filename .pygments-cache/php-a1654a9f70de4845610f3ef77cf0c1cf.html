@@ -1,0 +1,10 @@
+<div class="highlight"><pre><span class="nv">$secKey</span> <span class="o">=</span> <span class="nv">$headers</span><span class="p">[</span><span class="s1">&#39;Sec-WebSocket-Key&#39;</span><span class="p">];</span>
+<span class="nv">$secAccept</span> <span class="o">=</span> <span class="nb">base64_encode</span><span class="p">(</span><span class="nb">pack</span><span class="p">(</span><span class="s1">&#39;H*&#39;</span><span class="p">,</span> <span class="nb">sha1</span><span class="p">(</span><span class="nv">$secKey</span> <span class="o">.</span> <span class="s1">&#39;258EAFA5-E914-47DA-95CA-C5AB0DC85B11&#39;</span><span class="p">)));</span>
+<span class="nv">$upgrade</span>  <span class="o">=</span> <span class="s2">&quot;HTTP/1.1 101 Web Socket Protocol Handshake</span><span class="se">\r\n</span><span class="s2">&quot;</span> <span class="o">.</span>
+<span class="s2">&quot;Upgrade: websocket</span><span class="se">\r\n</span><span class="s2">&quot;</span> <span class="o">.</span>
+<span class="s2">&quot;Connection: Upgrade</span><span class="se">\r\n</span><span class="s2">&quot;</span> <span class="o">.</span>
+<span class="s2">&quot;WebSocket-Origin: </span><span class="si">$host</span><span class="se">\r\n</span><span class="s2">&quot;</span> <span class="o">.</span>
+<span class="s2">&quot;WebSocket-Location: ws://</span><span class="si">$host</span><span class="s2">:</span><span class="si">$port</span><span class="s2">/deamon.php</span><span class="se">\r\n</span><span class="s2">&quot;</span><span class="o">.</span>
+<span class="s2">&quot;Sec-WebSocket-Accept:</span><span class="si">$secAccept</span><span class="se">\r\n\r\n</span><span class="s2">&quot;</span><span class="p">;</span>
+<span class="nb">socket_write</span><span class="p">(</span><span class="nv">$client_conn</span><span class="p">,</span><span class="nv">$upgrade</span><span class="p">,</span><span class="nb">strlen</span><span class="p">(</span><span class="nv">$upgrade</span><span class="p">));</span>
+</pre></div>
