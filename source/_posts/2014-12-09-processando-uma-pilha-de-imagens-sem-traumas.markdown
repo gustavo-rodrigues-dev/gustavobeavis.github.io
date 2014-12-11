@@ -4,7 +4,9 @@ title: "Processando Uma Pilha De Imagens Sem Traumas"
 date: 2014-04-04 00:09:59 -0200
 comments: true
 categories: ["PHP", "GD", "IO", "Imagemagic"]
+author: Gustavo Rodrigues
 ---
+
 
 ![imagem](/../images/destaque_reduz_image.png)
 

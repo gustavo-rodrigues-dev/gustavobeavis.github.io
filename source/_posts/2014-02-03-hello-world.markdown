@@ -1,9 +1,9 @@
 ---
 layout: post
-title: "Wello World"
+title: "Hello World"
 date: 2014-02-03 08:59:51 +0000
 comments: true
-categories: [Wello world, blog]
+categories: [hello World, blog]
 author: Gustavo Rodrigues
 ---
 
